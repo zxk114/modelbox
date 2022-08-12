@@ -115,6 +115,17 @@ ExternalProject_Add(
   TEST_COMMAND      ""
 )
 
+# webui
+ExternalProject_Add(
+  modelbox-webui
+  URL                @LOCAL_PACKAGE_PATH@/modelbox-webui-0.0.7.zip
+  SOURCE_DIR         ${THIRDPARTY_DOWNLOAD_DIR}/modelbox-webui
+  CONFIGURE_COMMAND ""
+  BUILD_COMMAND     ""
+  INSTALL_COMMAND   ""
+  TEST_COMMAND      ""
+)
+
 # demo files
 if (${WITH_ALL_DEMO})
   ExternalProject_Add(

@@ -1,5 +1,5 @@
-FROM modelbox/ascend-base-ubuntu:latest
-FROM ubuntu:18.04
+FROM modelbox/ascend-base-openeuler:latest
+FROM openeuler/openeuler:20.03-lts-sp3
 
 COPY release /opt/release
 COPY --from=0 /usr/local/Ascend_run /usr/local/Ascend
@@ -20,18 +20,11 @@ ENV LD_LIBRARY_PATH=${ASCEND_PATH}/nnae/latest/fwkacllib/lib64${LD_LIBRARY_PATH:
 WORKDIR /root
 
 RUN ln -snf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime && echo "Asia/Shanghai" > /etc/timezone && \
-    if [ "$(arch)" = "aarch64" ];then sed -i 's@ports.ubuntu.com@mirrors.ustc.edu.cn@g' /etc/apt/sources.list;fi && \
-    rm -rf /var/lib/dpkg/info/* && \
-    apt update && apt upgrade -y && \
-    apt install -y python3.7-dev python3-pip python3-apt python3-setuptools && \
-    apt install -y gcc dbus systemd systemd-cron iproute2 gnupg2 libfuse2 libgtk-3-0 \
-        build-essential bash unzip ffmpeg curl pkg-config ca-certificates libduktape202 \
-        libssl1.1 libcpprest libswscale4 libavformat57 graphviz libprotobuf-c1 libopenblas-base && \
-    rm -f /usr/bin/python3 /usr/bin/python && \
-    update-alternatives --install /usr/bin/python python /usr/bin/python3.7 100 && \
-    update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.7 100 && \
-    update-alternatives --config python3 && \
-    rm -rf /var/lib/apt/lists/*
+    dnf update -y --nogpgcheck && \
+    dnf install -y --nogpgcheck gcc curl boost libnsl libssh2 libatomic mesa-libGL graphviz protobuf-c \
+        systemd openblas python3-devel lapack python3-perf fuse libxml2 openssl bc && \
+    ln -sf pip3.7 /usr/bin/pip && ln -sf python3.7 /usr/bin/python && \
+    dnf clean all && rm -rf /var/cache/dnf/*
 
 RUN mkdir -p /root/.pip && \
     echo "[global]" > /root/.pip/pip.conf && \
@@ -42,20 +35,18 @@ RUN mkdir -p /root/.pip && \
     groupadd HwHiAiUser && \
     useradd -g HwHiAiUser -d /home/HwHiAiUser -m HwHiAiUser && \
     python3 -m pip install --upgrade pip && \
-    python3 -m pip install --no-cache-dir numpy decorator psutil sympy cffi pyyaml pathlib2 grpcio grpcio-tools protobuf scipy requests pillow opencv-contrib-python==4.5.5.64 && \
+    python3 -m pip install --no-cache-dir numpy psutil decorator sympy cffi pyyaml pathlib2 grpcio grpcio-tools protobuf scipy requests pillow opencv-python==4.5.5.64 && \
     python3 -m pip install --no-cache-dir https://ms-release.obs.cn-north-4.myhuaweicloud.com/1.6.1/MindSpore/ascend/$(arch)/mindspore_ascend-1.6.1-cp37-cp37m-linux_$(arch).whl && \
     python3 -m pip install --no-cache-dir ${ASCEND_PATH}/nnae/latest/fwkacllib/lib64/topi-0.4.0-py3-none-any.whl && \
     python3 -m pip install --no-cache-dir ${ASCEND_PATH}/nnae/latest/fwkacllib/lib64/te-0.4.0-py3-none-any.whl && \
     python3 -m pip install --no-cache-dir ${ASCEND_PATH}/nnae/latest/fwkacllib/lib64/hccl-0.1.0-py3-none-any.whl && \
     echo "${ASCEND_PATH}/nnae/latest/fwkacllib/lib64" >>/etc/ld.so.conf && \
     echo "${ASCEND_PATH}/driver/lib64" >>/etc/ld.so.conf && \
+    echo "/usr/local/lib64" >>/etc/ld.so.conf && \
     echo "/usr/local/lib" >>/etc/ld.so.conf && \
     find /usr/local -name "*.a"|xargs rm -f
 
-RUN python3 -m pip install --no-cache-dir /opt/release/python/modelbox-*.whl && \
-    dpkg -i /opt/release/*.deb && \
-    usermod -G HwHiAiUser modelbox && \
-    (cd /lib/systemd/system/sysinit.target.wants/; for i in *; \
+RUN (cd /lib/systemd/system/sysinit.target.wants/; for i in *; \
     do [ $i = systemd-tmpfiles-setup.service ] || rm -f $i; done); \
     rm -f /lib/systemd/system/multi-user.target.wants/*; \
     rm -f /etc/systemd/system/*.wants/*; \
@@ -65,9 +56,9 @@ RUN python3 -m pip install --no-cache-dir /opt/release/python/modelbox-*.whl && 
     rm -f /lib/systemd/system/basic.target.wants/*; \
     rm -f /lib/systemd/system/anaconda.target.wants/*; \
     sed -i 's/^SystemMaxUse=.*/SystemMaxUse=16M/g' /etc/systemd/journald.conf && \
-    ldconfig -v 2>/dev/null|grep "libascend_hal.so" && systemctl enable modelbox
+    ldconfig -v 2>/dev/null|grep "libascend_hal.so"
 
 VOLUME ["/sys/fs/cgroup", "/tmp", "/run", "/run/lock"]
 STOPSIGNAL SIGRTMIN+3
 
-CMD ["/sbin/init", "--log-target=journal"]
+CMD ["/usr/sbin/init", "--log-target=journal"]

@@ -37,7 +37,7 @@ RUN mkdir -p /root/.pip && \
     echo "trusted-host = pypi.python.org" >>/root/.pip/pip.conf && \
     echo "timeout = 120" >>/root/.pip/pip.conf && \
     python3 -m pip install --upgrade pip && \
-    python3 -m pip install --no-cache-dir wheel numpy pyyaml requests opencv-contrib-python pillow && \
+    python3 -m pip install --no-cache-dir psutil wheel numpy pyyaml requests pillow opencv-contrib-python==4.5.5.64 && \
     curl -fsSL https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/3bf863cc.pub | apt-key add - && \
     curl -fsSL https://developer.download.nvidia.com/compute/machine-learning/repos/ubuntu1804/x86_64/7fa2af80.pub | apt-key add - && \
     echo "deb https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64 /" > /etc/apt/sources.list.d/cuda.list && \

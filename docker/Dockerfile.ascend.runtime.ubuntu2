@@ -52,10 +52,7 @@ RUN mkdir -p /root/.pip && \
     echo "/usr/local/lib" >>/etc/ld.so.conf && \
     find /usr/local -name "*.a"|xargs rm -f
 
-RUN python3 -m pip install --no-cache-dir /opt/release/python/modelbox-*.whl && \
-    dpkg -i /opt/release/*.deb && \
-    usermod -G HwHiAiUser modelbox && \
-    (cd /lib/systemd/system/sysinit.target.wants/; for i in *; \
+RUN (cd /lib/systemd/system/sysinit.target.wants/; for i in *; \
     do [ $i = systemd-tmpfiles-setup.service ] || rm -f $i; done); \
     rm -f /lib/systemd/system/multi-user.target.wants/*; \
     rm -f /etc/systemd/system/*.wants/*; \
@@ -65,7 +62,7 @@ RUN python3 -m pip install --no-cache-dir /opt/release/python/modelbox-*.whl && 
     rm -f /lib/systemd/system/basic.target.wants/*; \
     rm -f /lib/systemd/system/anaconda.target.wants/*; \
     sed -i 's/^SystemMaxUse=.*/SystemMaxUse=16M/g' /etc/systemd/journald.conf && \
-    ldconfig -v 2>/dev/null|grep "libascend_hal.so" && systemctl enable modelbox
+    ldconfig -v 2>/dev/null|grep "libascend_hal.so"
 
 VOLUME ["/sys/fs/cgroup", "/tmp", "/run", "/run/lock"]
 STOPSIGNAL SIGRTMIN+3

@@ -36,15 +36,15 @@ if [ "$(arch)" == "x86_64" ];then
         download https://github.com/modelbox-ai/modelbox-binary/releases/download/BinaryArchive/obssdk_3.22.3.tar.gz
     fi
 elif [ "$(arch)" == "aarch64" ];then
-    if [ "$VERSION_ID" == "22.04" ];then
-        download http://download.modelbox-ai.com/third-party/aarch64/opencv_4.2.0-ubuntu.tar.gz
-        download http://download.modelbox-ai.com/third-party/aarch64/obssdk_3.22.3-ubuntu.tar.gz
+    if [ "$VERSION_ID" == "18.04" ];then
+        cp -af /opt/thirdparty/aarch64/opencv_4.2.0-ubuntu.tar.gz .
+        cp -af /opt/thirdparty/aarch64/obssdk_3.22.3-ubuntu.tar.gz .
     elif [ "$VERSION_ID" == "20.03" ];then
-        download http://download.modelbox-ai.com/third-party/aarch64/cpprestsdk_2.10.15.tar.gz
-        download http://download.modelbox-ai.com/third-party/aarch64/duktape_2.6.0.tar.gz
-        download http://download.modelbox-ai.com/third-party/aarch64/ffmpeg_4.4.tar.gz
-        download http://download.modelbox-ai.com/third-party/aarch64/opencv_4.2.0.tar.gz
-        download http://download.modelbox-ai.com/third-party/aarch64/obssdk_3.22.3.tar.gz
+        cp -af /opt/thirdparty/aarch64/cpprestsdk_2.10.18.tar.gz .
+        cp -af /opt/thirdparty/aarch64/duktape_2.6.0.tar.gz .
+        cp -af /opt/thirdparty/aarch64/ffmpeg_4.4.tar.gz .
+        cp -af /opt/thirdparty/aarch64/opencv_4.2.0.tar.gz .
+        cp -af /opt/thirdparty/aarch64/obssdk_3.22.3.tar.gz .
     fi
 else
     echo "build error"
