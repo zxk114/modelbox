@@ -1,4 +1,4 @@
-ARG BASE_IMAGE=ubuntu:18.04
+ARG BASE_IMAGE=ubuntu:20.04
 FROM ${BASE_IMAGE} as base
 
 COPY release /opt/release
@@ -15,15 +15,15 @@ ARG NVIDIA_REQUIRE_CUDA
 WORKDIR /root
 
 RUN ln -snf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime && echo "Asia/Shanghai" > /etc/timezone && \
-    apt update && apt upgrade -y && \
-    apt install  -y python3-pip python3-apt python3-setuptools && \
-    apt install  -y dbus systemd systemd-cron iproute2 gnupg2 libfuse2 \
-        build-essential bash unzip ffmpeg curl pkg-config ca-certificates libduktape202 \
-        libssl1.1 libcpprest libswscale4 libavformat57 graphviz libprotobuf-c1 libgtk-3-0 && \
-    rm -f /usr/bin/python3 /usr/bin/python && \
-    update-alternatives --install /usr/bin/python python /usr/bin/python3.7 100 && \
-    update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.7 100 && \
-    update-alternatives --config python3 && \
+    export DEBIAN_FRONTEND=noninteractive DEBIAN_PRIORITY=low TZ=Asia/Shanghai && \
+    apt update && \
+    apt install -y python3.9 python3-pip python3-apt python3-setuptools && \
+    apt install -y dbus systemd systemd-cron iproute2 gnupg2 libfuse2 \
+        build-essential bash unzip ffmpeg curl pkg-config ca-certificates libduktape205 \
+        libssl1.1 libcpprest graphviz libprotobuf-c1 libgtk-3-0 && \
+    update-ca-certificates && \
+    DEBIAN_FRONTEND=noninteractive apt upgrade -y && \
+    ln -sf python3.9 /usr/bin/python3 && \
     rm -rf /var/lib/apt/lists/*
 
 RUN mkdir -p /root/.pip && \
@@ -33,10 +33,10 @@ RUN mkdir -p /root/.pip && \
     echo "timeout = 120" >>/root/.pip/pip.conf && \
     python3 -m pip install --upgrade pip && \
     python3 -m pip install --no-cache-dir psutil wheel numpy pyyaml requests pillow opencv-contrib-python==4.5.5.64 && \
-    curl -fsSL https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/3bf863cc.pub | apt-key add - && \
-    curl -fsSL https://developer.download.nvidia.com/compute/machine-learning/repos/ubuntu1804/x86_64/7fa2af80.pub | apt-key add - && \
-    echo "deb https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64 /" > /etc/apt/sources.list.d/cuda.list && \
-    echo "deb https://developer.download.nvidia.com/compute/machine-learning/repos/ubuntu1804/x86_64 /" > /etc/apt/sources.list.d/nvidia-ml.list && \
+    curl -fsSL https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/3bf863cc.pub | apt-key add - && \
+    curl -fsSL https://developer.download.nvidia.com/compute/machine-learning/repos/ubuntu2004/x86_64/7fa2af80.pub | apt-key add - && \
+    echo "deb https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64 /" > /etc/apt/sources.list.d/cuda.list && \
+    echo "deb https://developer.download.nvidia.com/compute/machine-learning/repos/ubuntu2004/x86_64 /" > /etc/apt/sources.list.d/nvidia-ml.list && \
     apt update && \
     apt install -y --no-install-recommends \
         cuda-nvtx-${CUDA_VER} \
@@ -65,8 +65,7 @@ RUN apt update && \
             libnvinfer${trt_ver} \
             libnvonnxparsers${trt_ver} \
             libnvparsers${trt_ver} \
-            libnvinfer-plugin${trt_ver} \
-            python3-libnvinfer=${trt_ver#*=}; \
+            libnvinfer-plugin${trt_ver}; \
     elif [ -n "${TORCH_VERSION}" ]; then \
         curl -LO https://download.pytorch.org/libtorch/cu102/libtorch-cxx11-abi-shared-with-deps-1.9.1%2Bcu102.zip && \
         unzip libtorch-*.zip -d /root >/dev/null 2>&1 && \
