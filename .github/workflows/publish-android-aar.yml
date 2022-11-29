@@ -1,0 +1,27 @@
+name: Publish android aar
+on:
+  workflow_dispatch:
+
+jobs:
+  buildtest_android_ubuntu:
+    runs-on: ubuntu-22.04
+    container: ubuntu:22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@main
+      - name: Patch
+        run: |
+          apt update
+          apt install -y curl patch
+          curl -LO https://github.com/modelbox-ai/modelbox-binary/releases/download/BinaryArchive_android/modelbox.patch
+          patch -p1 < modelbox.patch
+      - name: Package
+        run: |
+          bash -x setup_android_ndk.sh
+          bash -x build_for_android.sh
+        shell: bash
+      - name: Upload Artifact
+        uses: actions/upload-artifact@main
+        with:
+          name: modelbox_aar
+          path: aar_pkg/modelbox.aar

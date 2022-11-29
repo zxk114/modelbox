@@ -1,0 +1,27 @@
+name: Publish android test2
+on:
+  workflow_dispatch:
+
+jobs:
+  unittest_android_ubuntu:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@main
+      - name: Patch
+        run: |
+          curl -LO https://github.com/modelbox-ai/modelbox-binary/releases/download/BinaryArchive_android/modelbox.patch
+          patch -p1 < modelbox.patch
+      - name: Download
+        run: |
+          curl -LO https://github.com/modelbox-ai/modelbox-binary/releases/download/BinaryArchive_android/unittest.tar.gz
+      - name: Setup_NDK and UnitTest
+        run: |
+          containerid=$(docker run -dit --rm --privileged \
+                      -e XDG_SESSION_TYPE=wayland \
+                      -v $(pwd):/data/devel/modelbox \
+                      ubuntu:22.04 /bin/bash | cut -c1-5)
+          docker exec ${containerid} /bin/bash -c 'bash -x /data/devel/modelbox/setup_android_ndk.sh'
+          docker exec ${containerid} /bin/bash -c 'bash -x /data/devel/modelbox/build_for_android.sh x64'
+          docker exec ${containerid} /bin/bash -c 'bash -x /data/devel/modelbox/build_for_android.sh unittest'
+        shell: bash

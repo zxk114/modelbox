@@ -1,0 +1,37 @@
+name: action test
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'new image tag(e.g. v1.1.0)'
+        required: true
+        default: 'v1.0.0'
+      set_tag:
+        description: 'select no latest tag'
+        required: true
+        type: boolean
+
+env:
+  BUILD_TYPE: Release
+  IMAGE_VERSION: ${{ github.event.inputs.version }}
+  IMAGE_LATEST: latest
+
+jobs:
+  job1:
+    runs-on: ubuntu-latest
+    if: ${{ inputs.set_tag }}
+    outputs:
+      output1: ${{ steps.settag.outputs.IMAGE_LATEST }}
+    steps:
+      - id: settag
+        run: echo "IMAGE_LATEST=${{ env.IMAGE_VERSION }}" >> $GITHUB_OUTPUT
+
+  job2:
+    runs-on: ubuntu-latest
+    if: ${{ always() }}
+    needs: job1
+    steps:
+      - run: |
+          aaa=${{ needs.job1.outputs.IMAGE_LATEST }}
+          echo $aaa
+        shell: bash

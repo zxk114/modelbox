@@ -1,0 +1,44 @@
+name: Publish android apk
+on:
+  workflow_dispatch:
+
+jobs:
+  build_android_apk:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@main
+      - name: Prepare
+        run: |
+          /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)"
+          brew tap adoptopenjdk/openjdk
+          brew install --cask adoptopenjdk8
+          brew install gradle
+          brew install --cask android-sdk
+          sdkmanager "platforms;android-28"
+
+          local.properties
+
+          gradlew assembleDebug
+          keytool -genkey -v -keystore my-release-key.jks -keyalg RSA -keysize 2048 -validity 10000 -alias my-alias
+
+          gradlew assembleRelease
+          zipalign -v -p 4 my-app-unsigned.apk my-app-unsigned-aligned.apk
+          apksigner sign --ks my-release-key.jks --out my-app-release.apk my-app-unsigned-aligned.apk
+          apksigner verify my-app-release.apk
+
+          export GRADLE_HOME=/usr/local/Cellar/gradle
+          export ANDROID_HOME=/usr/local/Caskroom/android-sdk
+          export PATH=$PATH:$ANDROID_HOME/4333796/tools/bin:$GRADLE_HOME/7.6/bin
+      - name: Setup ndk
+        run: |
+          bash -x setup_android_ndk.sh
+      - name: Package
+        run: |
+          bash -x build_for_android.sh
+        shell: bash
+      - name: Upload Artifact
+        uses: actions/upload-artifact@main
+        with:
+          name: modelbox_aar
+          path: aar_pkg/modelbox.aar

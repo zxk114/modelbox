@@ -37,7 +37,8 @@ WORKDIR /root
 
 RUN ln -snf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime && echo "Asia/Shanghai" > /etc/timezone && \
     dnf update -y --nogpgcheck && \
-    dnf install -y --nogpgcheck vim gcc gcc-c++ make cmake libnsl perf doxygen gcc-gfortran pciutils alsa-lib gdb clang gtk3-devel \
+    dnf install -y --nogpgcheck \
+        vim gcc gcc-c++ make cmake libnsl perf doxygen gcc-gfortran pciutils alsa-lib gdb clang gtk3-devel \
         zlib-devel curl-devel bzip2-devel rpm-build sqlite-devel libffi-devel openssl-devel xz-devel git passwd systemd \
         krb5-devel expat-devel boost-devel ncurses-devel libxml2-devel libssh2-devel python3-devel python3-perf bc nc \
         readline-devel nss-devel fuse-devel gdbm-devel glibc-devel glibc-debuginfo gnutls-devel net-tools libatomic \
