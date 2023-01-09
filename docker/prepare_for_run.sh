@@ -40,24 +40,28 @@ if [ "${PLATFROM}" == "x86_64" ];then
             download https://github.com/modelbox-ai/modelbox-binary/releases/download/BinaryArchive/opencv_4.2.0_ubuntu.tar.gz
         fi
         download https://github.com/modelbox-ai/modelbox-binary/releases/download/BinaryArchive/obssdk_3.22.3_ubuntu.tar.gz
+        download https://github.com/modelbox-ai/modelbox-binary/releases/download/BinaryArchive/mqtt_1.3.12_ubuntu.tar.gz
     elif [ "$OS_NAME" == "openEuler" ];then
         download https://github.com/modelbox-ai/modelbox-binary/releases/download/BinaryArchive/cpprestsdk_2.10.15.tar.gz
         download https://github.com/modelbox-ai/modelbox-binary/releases/download/BinaryArchive/duktape_2.6.0.tar.gz
         download https://github.com/modelbox-ai/modelbox-binary/releases/download/BinaryArchive/ffmpeg_4.4.tar.gz
         download https://github.com/modelbox-ai/modelbox-binary/releases/download/BinaryArchive/opencv_4.2.0.tar.gz
         download https://github.com/modelbox-ai/modelbox-binary/releases/download/BinaryArchive/obssdk_3.22.3.tar.gz
+        download https://github.com/modelbox-ai/modelbox-binary/releases/download/BinaryArchive/mqtt_1.3.12.tar.gz
     fi
 elif [ "${PLATFROM}" == "aarch64" ];then
     if [ "$OS_NAME" == "Ubuntu" ];then
         download https://github.com/modelbox-ai/modelbox-binary/releases/download/BinaryArchive_aarch64/glog_0.6.0_ubuntu.tar.gz
         download https://github.com/modelbox-ai/modelbox-binary/releases/download/BinaryArchive_aarch64/opencv_4.5.5_ubuntu.tar.gz
         download https://github.com/modelbox-ai/modelbox-binary/releases/download/BinaryArchive_aarch64/obssdk_3.22.3_ubuntu.tar.gz
+        download https://github.com/modelbox-ai/modelbox-binary/releases/download/BinaryArchive_aarch64/mqtt_1.3.12_ubuntu.tar.gz
     elif [ "$OS_NAME" == "openEuler" ];then
         download https://github.com/modelbox-ai/modelbox-binary/releases/download/BinaryArchive_aarch64/cpprestsdk_2.10.18.tar.gz
         download https://github.com/modelbox-ai/modelbox-binary/releases/download/BinaryArchive_aarch64/duktape_2.6.0.tar.gz
         download https://github.com/modelbox-ai/modelbox-binary/releases/download/BinaryArchive_aarch64/ffmpeg_4.4.tar.gz
         download https://github.com/modelbox-ai/modelbox-binary/releases/download/BinaryArchive_aarch64/opencv_4.2.0.tar.gz
         download https://github.com/modelbox-ai/modelbox-binary/releases/download/BinaryArchive_aarch64/obssdk_3.22.3.tar.gz
+        download https://github.com/modelbox-ai/modelbox-binary/releases/download/BinaryArchive_aarch64/mqtt_1.3.12.tar.gz
     fi
 else
     echo "build error"

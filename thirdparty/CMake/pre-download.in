@@ -38,6 +38,7 @@ if (NOT @USE_CN_MIRROR@)
   set(APIGW_CPP_SDK_DOWNLOAD_URL "https://github.com/modelbox-ai/modelbox-binary/releases/download/BinaryArchive/APIGW-cpp-sdk.zip")
   set(MODELBOX_WEBUI_DOWNLOAD_URL "https://github.com/modelbox-ai/modelbox-webui/archive/refs/tags/0.1.3.zip")
   set(EMOTION_DEMO_FILES_DOWNLOAD_URL "https://github.com/modelbox-ai/modelbox-binary/releases/download/BinaryArchive/emotion_demo_files.zip")
+  set(MODELARTS_PLUGIN_DOWNLOAD_URL "https://github.com/zxk114/modelbox-modelarts-plugin/archive/refs/heads/main.zip")
 else()
   set(GOOGLETEST_DOWNLOAD_URL "https://gitcode.net/mirrors/google/googletest/-/archive/release-1.11.0/googletest-release-1.11.0.zip")
   set(HUAWEI_SECURE_C_DOWNLOAD_URL "https://gitee.com/openeuler/libboundscheck/repository/archive/master.zip")
@@ -49,6 +50,7 @@ else()
   set(APIGW_CPP_SDK_DOWNLOAD_URL "https://obs.cn-north-1.myhuaweicloud.com/apig-sdk/APIGW-cpp-sdk.zip")
   set(MODELBOX_WEBUI_DOWNLOAD_URL "https://gitee.com/modelbox/modelbox-webui/repository/archive/tags/0.1.3.zip")
   set(EMOTION_DEMO_FILES_DOWNLOAD_URL "https://gitee.com/modelbox/modelbox-binary/attach_files/1010735/download/emotion_demo_files.zip")
+  set(MODELARTS_PLUGIN_DOWNLOAD_URL "http://download.modelbox-ai.com/third-party/modelbox-modelarts-plugin.zip")
 endif()
 
 # 下载googletest
@@ -131,8 +133,8 @@ ExternalProject_Add(
 # APIGW-cpp-sdk
 ExternalProject_Add(
   APIGW-cpp-sdk
-  URL                ${APIGW_CPP_SDK_DOWNLOAD_URL}
-  SOURCE_DIR         ${THIRDPARTY_DOWNLOAD_DIR}/APIGW-cpp-sdk-1.0.2
+  URL               ${APIGW_CPP_SDK_DOWNLOAD_URL}
+  SOURCE_DIR        ${THIRDPARTY_DOWNLOAD_DIR}/APIGW-cpp-sdk-1.0.2
   CONFIGURE_COMMAND ""
   BUILD_COMMAND     ""
   INSTALL_COMMAND   ""
@@ -142,8 +144,8 @@ ExternalProject_Add(
 # webui
 ExternalProject_Add(
   modelbox-webui
-  URL                ${MODELBOX_WEBUI_DOWNLOAD_URL}
-  SOURCE_DIR         ${THIRDPARTY_DOWNLOAD_DIR}/modelbox-webui
+  URL               ${MODELBOX_WEBUI_DOWNLOAD_URL}
+  SOURCE_DIR        ${THIRDPARTY_DOWNLOAD_DIR}/modelbox-webui
   CONFIGURE_COMMAND ""
   BUILD_COMMAND     ""
   INSTALL_COMMAND   ""
@@ -154,11 +156,22 @@ ExternalProject_Add(
 if (${WITH_ALL_DEMO})
   ExternalProject_Add(
     emotion_demo_files
-    URL                ${EMOTION_DEMO_FILES_DOWNLOAD_URL}
-    SOURCE_DIR         ${THIRDPARTY_DOWNLOAD_DIR}/demo/emotion_demo_files
+    URL               ${EMOTION_DEMO_FILES_DOWNLOAD_URL}
+    SOURCE_DIR        ${THIRDPARTY_DOWNLOAD_DIR}/demo/emotion_demo_files
     CONFIGURE_COMMAND ""
     BUILD_COMMAND     ""
     INSTALL_COMMAND   ""
     TEST_COMMAND      ""
   )
+
+# modelarts-plugin
+ExternalProject_Add(
+  modelarts-plugin
+  URL               ${MODELARTS_PLUGIN_DOWNLOAD_URL}
+  SOURCE_DIR        ${THIRDPARTY_DOWNLOAD_DIR}/modelbox-modelarts-plugin
+  CONFIGURE_COMMAND ""
+  BUILD_COMMAND     ""
+  INSTALL_COMMAND   ""
+  TEST_COMMAND      "ls -lh /usr/local/lib/*.so|grep "modelarts""
+)
 endif()

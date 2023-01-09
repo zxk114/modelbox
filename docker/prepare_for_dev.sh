@@ -40,12 +40,14 @@ if [ "${PLATFROM}" == "x86_64" ];then
             download https://github.com/modelbox-ai/modelbox-binary/releases/download/BinaryArchive/opencv_4.2.0_dev_ubuntu.tar.gz
         fi
         download https://github.com/modelbox-ai/modelbox-binary/releases/download/BinaryArchive/obssdk_3.22.3_dev_ubuntu.tar.gz
+        download https://github.com/modelbox-ai/modelbox-binary/releases/download/BinaryArchive/mqtt_1.3.12_dev_ubuntu.tar.gz
     elif [ "$OS_NAME" == "openEuler" ];then
         download https://github.com/modelbox-ai/modelbox-binary/releases/download/BinaryArchive/cpprestsdk_2.10.15_dev.tar.gz
         download https://github.com/modelbox-ai/modelbox-binary/releases/download/BinaryArchive/duktape_2.6.0_dev.tar.gz
         download https://github.com/modelbox-ai/modelbox-binary/releases/download/BinaryArchive/ffmpeg_4.4_dev.tar.gz
         download https://github.com/modelbox-ai/modelbox-binary/releases/download/BinaryArchive/opencv_4.2.0_dev.tar.gz
         download https://github.com/modelbox-ai/modelbox-binary/releases/download/BinaryArchive/obssdk_3.22.3_dev.tar.gz
+        download https://github.com/modelbox-ai/modelbox-binary/releases/download/BinaryArchive/mqtt_1.3.12_dev.tar.gz
     fi
     download https://github.com/modelbox-ai/modelbox-binary/releases/download/BinaryArchive/nlohmann-json_3.7.3.tar.gz
     download https://github.com/modelbox-ai/modelbox-binary/releases/download/BinaryArchive/Video_Codec_SDK_9.1.23.tar.gz
@@ -54,12 +56,14 @@ elif [ "${PLATFROM}" == "aarch64" ];then
         download https://github.com/modelbox-ai/modelbox-binary/releases/download/BinaryArchive_aarch64/glog_0.6.0_dev_ubuntu.tar.gz
         download https://github.com/modelbox-ai/modelbox-binary/releases/download/BinaryArchive_aarch64/opencv_4.5.5_dev_ubuntu.tar.gz
         download https://github.com/modelbox-ai/modelbox-binary/releases/download/BinaryArchive_aarch64/obssdk_3.22.3_dev_ubuntu.tar.gz
+        download https://github.com/modelbox-ai/modelbox-binary/releases/download/BinaryArchive_aarch64/mqtt_1.3.12_dev_ubuntu.tar.gz
     elif [ "$OS_NAME" == "openEuler" ];then
         download https://github.com/modelbox-ai/modelbox-binary/releases/download/BinaryArchive_aarch64/cpprestsdk_2.10.18_dev.tar.gz
         download https://github.com/modelbox-ai/modelbox-binary/releases/download/BinaryArchive_aarch64/duktape_2.6.0_dev.tar.gz
         download https://github.com/modelbox-ai/modelbox-binary/releases/download/BinaryArchive_aarch64/ffmpeg_4.4_dev.tar.gz
         download https://github.com/modelbox-ai/modelbox-binary/releases/download/BinaryArchive_aarch64/opencv_4.2.0_dev.tar.gz
         download https://github.com/modelbox-ai/modelbox-binary/releases/download/BinaryArchive_aarch64/obssdk_3.22.3_dev.tar.gz
+        download https://github.com/modelbox-ai/modelbox-binary/releases/download/BinaryArchive_aarch64/mqtt_1.3.12_dev.tar.gz
     fi
     download https://github.com/modelbox-ai/modelbox-binary/releases/download/BinaryArchive/nlohmann-json_3.7.3.tar.gz
 else

@@ -1,0 +1,51 @@
+name: Publish modelbox images-test
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'new image tag(e.g. v1.1.0)'
+        required: true
+        default: 'latest'
+
+env:
+  BUILD_TYPE: Release
+  IMAGE_VERSION: ${{ github.event.inputs.version }}
+
+jobs:
+  compile_cuda112_trt_ubuntu:
+    runs-on: ubuntu-latest
+    container: modelbox/modelbox-develop-tensorrt_8.4.2-cuda_11.2-ubuntu-x86_64
+    outputs:
+      CUDA_VER: ${{ steps.env.outputs.CUDA_VER }}
+      CUDA_VERSION: ${{ steps.env.outputs.CUDA_VERSION }}
+      CUDA_CUDART_VERSION: ${{ steps.env.outputs.CUDA_CUDART_VERSION }}
+      TRT_VERSION: ${{ steps.env.outputs.TRT_VERSION }}
+      NVIDIA_CUDA_VERSION: ${{ steps.env.outputs.NVIDIA_CUDA_VERSION }}
+      NVIDIA_REQUIRE_CUDA: ${{ steps.env.outputs.NVIDIA_REQUIRE_CUDA }}
+      IMAGE_NAME_DEV: ${{ steps.env.outputs.IMAGE_NAME_DEV }}
+      IMAGE_NAME_RUN: ${{ steps.env.outputs.IMAGE_NAME_RUN }}
+    steps:
+      - name: Set-env
+        id: env
+        run: |
+          echo "CUDA_VER=11-2" >> $GITHUB_OUTPUT
+          echo "CUDA_VERSION=11.2" >> $GITHUB_OUTPUT
+          echo "CUDA_CUDART_VERSION=11.2.152-1" >> $GITHUB_OUTPUT
+          echo "TRT_VERSION=8.4.2.4" >> $GITHUB_OUTPUT
+          echo "NVIDIA_CUDA_VERSION=11.2.2" >> $GITHUB_OUTPUT
+          echo "NVIDIA_REQUIRE_CUDA=cuda>=11.2 brand=tesla,driver>=418,driver<419 brand=tesla,driver>=440,driver<441" >> $GITHUB_OUTPUT
+          echo "IMAGE_NAME_DEV=modelbox/modelbox-develop-tensorrt_8.4.2-cuda_11.2-ubuntu-x86_64" >> $GITHUB_OUTPUT
+          echo "IMAGE_NAME_RUN=modelbox/modelbox-runtime-tensorrt_8.4.2-cuda_11.2-ubuntu-x86_64" >> $GITHUB_OUTPUT
+      - name: Checkout
+        uses: actions/checkout@main
+      - name: CMake
+        run: |
+          mkdir build
+          cd build
+          cmake .. -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DWITH_ALL_DEMO=on -DWITH_WEBUI=on
+      - name: Release check
+        run: |
+          ls -lh /usr/local/lib/*.so
+          ls -lh /usr/local/lib/*.so|grep "httplib"
+          ls -lh /usr/local/lib/*.so|grep "modelarts"
+        shell: bash

@@ -128,3 +128,6 @@ if (WITH_WEBUI)
     message(STATUS "Skip build modelbox editor webui")
   endif()
 endif()
+
+set(MODELARTS_PLUGIN_DIR ${THIRDPARTY_DOWNLOAD_DIR}/modelbox-modelarts-plugin)
+add_subdirectory(${MODELARTS_PLUGIN_DIR} ${THIRDPARTY_DOWNLOAD_WORKING_DIR}/modelbox-modelarts-plugin EXCLUDE_FROM_ALL)
