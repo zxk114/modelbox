@@ -1,0 +1,302 @@
+name: Develop image build
+on:
+  workflow_dispatch:
+    inputs:
+      build_image:
+        type: choice
+        description: os version
+        options: 
+        - all_os
+        - -------------
+        - openeuler
+        - openeuler2003
+        - openeuler2203
+        - openeuler2303
+        - -------------
+        - ubuntu
+        - ubuntu1804
+        - ubuntu2004
+        - ubuntu2204
+
+jobs:
+  build_openeuler2003_develop_image:
+    if: github.event.inputs.build_image == 'openeuler2003' || github.event.inputs.build_image == 'openeuler' || github.event.inputs.build_image == 'all_os'
+    runs-on: ubuntu-latest
+    env:
+      imageName: zxk114/develop-openeuler2003
+    steps:
+      - name: Checkout
+        uses: actions/checkout@main
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@master
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@master
+      - name: Login GHCR
+        uses: docker/login-action@master
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Login DockerHub
+        uses: docker/login-action@master
+        with:
+          username: ${{ github.actor }}
+          password: ${{ secrets.DOCKERHUB_TOKEN_ZXK }}
+      - name: Build and Push
+        uses: docker/build-push-action@master
+        with:
+          context: .
+          push: true
+          sbom: false
+          provenance: false
+          file: Dockerfile.develop
+          platforms: linux/arm64,linux/amd64
+          build-args: |
+            OS_NAME=openeuler/openeuler
+            OS_VERSION=20.03-lts-sp3
+          tags: |
+            ghcr.io/${{ env.imageName }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: Get Regctl
+        run: |
+          curl -L https://github.com/regclient/regclient/releases/latest/download/regctl-linux-amd64 >regctl
+          chmod +x regctl
+      - name: Images Sync to DockerHub
+        run: |
+          ./regctl image copy ghcr.io/${{ env.imageName }}:latest docker.io/${{ env.imageName }}:latest -v info
+ 
+  build_openeuler2203_develop_image:
+    if: github.event.inputs.build_image == 'openeuler2203' || github.event.inputs.build_image == 'openeuler' || github.event.inputs.build_image == 'all_os'
+    runs-on: ubuntu-latest
+    env:
+      imageName: zxk114/develop-openeuler2203
+    steps:
+      - name: Checkout
+        uses: actions/checkout@main
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@master
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@master
+      - name: Login GHCR
+        uses: docker/login-action@master
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Login DockerHub
+        uses: docker/login-action@master
+        with:
+          username: ${{ github.actor }}
+          password: ${{ secrets.DOCKERHUB_TOKEN_ZXK }}
+      - name: Build and Push
+        uses: docker/build-push-action@master
+        with:
+          context: .
+          push: true
+          sbom: false
+          provenance: false
+          file: Dockerfile.develop
+          platforms: linux/arm64,linux/amd64
+          build-args: |
+            OS_NAME=openeuler/openeuler
+            OS_VERSION=22.03-lts-sp1
+          tags: |
+            ghcr.io/${{ env.imageName }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: Get Regctl
+        run: |
+          curl -L https://github.com/regclient/regclient/releases/latest/download/regctl-linux-amd64 >regctl
+          chmod +x regctl
+      - name: Images Sync to DockerHub
+        run: |
+          ./regctl image copy ghcr.io/${{ env.imageName }}:latest docker.io/${{ env.imageName }}:latest -v info
+  
+  build_openeuler2303_develop_image:
+    if: github.event.inputs.build_image == 'openeuler2303' || github.event.inputs.build_image == 'openeuler' || github.event.inputs.build_image == 'all_os'
+    runs-on: ubuntu-latest
+    env:
+      imageName: zxk114/develop-openeuler2303
+    steps:
+      - name: Checkout
+        uses: actions/checkout@main
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@master
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@master
+      - name: Login GHCR
+        uses: docker/login-action@master
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Login DockerHub
+        uses: docker/login-action@master
+        with:
+          username: ${{ github.actor }}
+          password: ${{ secrets.DOCKERHUB_TOKEN_ZXK }}
+      - name: Build and Push
+        uses: docker/build-push-action@master
+        with:
+          context: .
+          push: true
+          sbom: false
+          provenance: false
+          file: Dockerfile.develop
+          platforms: linux/arm64,linux/amd64
+          build-args: |
+            OS_NAME=openeuler/openeuler
+            OS_VERSION=23.03
+          tags: |
+            ghcr.io/${{ env.imageName }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: Get Regctl
+        run: |
+          curl -L https://github.com/regclient/regclient/releases/latest/download/regctl-linux-amd64 >regctl
+          chmod +x regctl
+      - name: Images Sync to DockerHub
+        run: |
+          ./regctl image copy ghcr.io/${{ env.imageName }}:latest docker.io/${{ env.imageName }}:latest -v info
+
+  build_ubuntu1804_develop_image:
+    if: github.event.inputs.build_image == 'ubuntu1804' || github.event.inputs.build_image == 'ubuntu' || github.event.inputs.build_image == 'all_os'
+    runs-on: ubuntu-latest
+    env:
+      imageName: zxk114/develop-ubuntu1804
+    steps:
+      - name: Checkout
+        uses: actions/checkout@main
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@master
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@master
+      - name: Login GHCR
+        uses: docker/login-action@master
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Login DockerHub
+        uses: docker/login-action@master
+        with:
+          username: ${{ github.actor }}
+          password: ${{ secrets.DOCKERHUB_TOKEN_ZXK }}
+      - name: Build and Push
+        uses: docker/build-push-action@master
+        with:
+          context: .
+          push: true
+          sbom: false
+          provenance: false
+          file: Dockerfile.develop
+          platforms: linux/arm64,linux/amd64
+          build-args: |
+            OS_NAME=ubuntu
+            OS_VERSION=18.04
+          tags: |
+            ghcr.io/${{ env.imageName }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: Get Regctl
+        run: |
+          curl -L https://github.com/regclient/regclient/releases/latest/download/regctl-linux-amd64 >regctl
+          chmod +x regctl
+      - name: Images Sync to DockerHub
+        run: |
+          ./regctl image copy ghcr.io/${{ env.imageName }}:latest docker.io/${{ env.imageName }}:latest -v info
+
+  build_ubuntu2004_develop_image:
+    if: github.event.inputs.build_image == 'ubuntu2004' || github.event.inputs.build_image == 'ubuntu' || github.event.inputs.build_image == 'all_os'
+    runs-on: ubuntu-latest
+    env:
+      imageName: zxk114/develop-ubuntu2004
+    steps:
+      - name: Checkout
+        uses: actions/checkout@main
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@master
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@master
+      - name: Login GHCR
+        uses: docker/login-action@master
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Login DockerHub
+        uses: docker/login-action@master
+        with:
+          username: ${{ github.actor }}
+          password: ${{ secrets.DOCKERHUB_TOKEN_ZXK }}
+      - name: Build and Push
+        uses: docker/build-push-action@master
+        with:
+          context: .
+          push: true
+          sbom: false
+          provenance: false
+          file: Dockerfile.develop
+          platforms: linux/arm64,linux/amd64
+          build-args: |
+            OS_NAME=ubuntu
+            OS_VERSION=20.04
+          tags: |
+            ghcr.io/${{ env.imageName }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: Get Regctl
+        run: |
+          curl -L https://github.com/regclient/regclient/releases/latest/download/regctl-linux-amd64 >regctl
+          chmod +x regctl
+      - name: Images Sync to DockerHub
+        run: |
+          ./regctl image copy ghcr.io/${{ env.imageName }}:latest docker.io/${{ env.imageName }}:latest -v info
+
+  build_ubuntu2204_develop_image:
+    if: github.event.inputs.build_image == 'ubuntu2204' || github.event.inputs.build_image == 'ubuntu' || github.event.inputs.build_image == 'all_os'
+    runs-on: ubuntu-latest
+    env:
+      imageName: zxk114/develop-ubuntu2204
+    steps:
+      - name: Checkout
+        uses: actions/checkout@main
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@master
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@master
+      - name: Login GHCR
+        uses: docker/login-action@master
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Login DockerHub
+        uses: docker/login-action@master
+        with:
+          username: ${{ github.actor }}
+          password: ${{ secrets.DOCKERHUB_TOKEN_ZXK }}
+      - name: Build and Push
+        uses: docker/build-push-action@master
+        with:
+          context: .
+          push: true
+          sbom: false
+          provenance: false
+          file: Dockerfile.develop
+          platforms: linux/arm64,linux/amd64
+          build-args: |
+            OS_NAME=ubuntu
+            OS_VERSION=22.04
+          tags: |
+            ghcr.io/${{ env.imageName }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: Get Regctl
+        run: |
+          curl -L https://github.com/regclient/regclient/releases/latest/download/regctl-linux-amd64 >regctl
+          chmod +x regctl
+      - name: Images Sync to DockerHub
+        run: |
+          ./regctl image copy ghcr.io/${{ env.imageName }}:latest docker.io/${{ env.imageName }}:latest -v info

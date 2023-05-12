@@ -1,0 +1,663 @@
+name: Package for openEuler20.03
+
+on:
+  workflow_dispatch:
+    inputs:
+      package_name:
+        type: choice
+        description: package for openeuler
+        options: 
+        - glog_0.6.0
+        - mqtt_1.3.12
+        - ffmpeg_4.4.3
+        - opencv_4.5.5
+        - opencv_4.5.5_x86
+        - opencv_4.5.5_arm
+        - cpprestsdk_2.10.18
+        - duktape_2.6.0
+        - all_package
+
+jobs:
+
+ #****************************package_glog_openeuler******************************************
+
+  package_glog_x86_64:
+    if: inputs.package_name == 'glog_0.6.0' || inputs.package_name == 'all_package'
+    runs-on: ubuntu-latest
+    container: ghcr.io/zxk114/develop-openeuler2003
+    steps:
+      - name: Checkout
+        uses: actions/checkout@main
+        with:
+          repository: 'google/glog'
+          ref: 'v0.6.0'
+      - name: CMake
+        run: |
+          mkdir build
+          cd build
+          cmake .. \
+               -D CMAKE_INSTALL_PREFIX=/usr/local \
+               -D CMAKE_INSTALL_LIBDIR=/usr/local/lib64 \
+               -D CMAKE_POSITION_INDEPENDENT_CODE=ON \
+               -D BUILD_SHARED_LIBS=ON \
+               -D CMAKE_BUILD_TYPE=Release
+      - name: Build
+        working-directory: build
+        run: |
+          make -j$[$(nproc) * 2]
+          make install
+      - name: Package
+        working-directory: build
+        run: |
+          cd /usr/local
+          rm -rf lib64/python* lib64/*.a
+          ls -lh lib64 include
+          tar zcf glog_0.6.0-openeuler20.03-x86_64.tar.gz lib64
+          tar zcf glog_0.6.0-devel-openeuler20.03-x86_64.tar.gz lib64 include
+          ldd /usr/local/lib64/libglog.so
+      - name: Upload Artifact
+        uses: actions/upload-artifact@main
+        with:
+          name: glog_0.6.0-openeuler20.03-x86_64
+          path: |
+            /usr/local/glog_0.6.0-openeuler20.03-x86_64.tar.gz
+            /usr/local/glog_0.6.0-devel-openeuler20.03-x86_64.tar.gz
+
+  package_glog_aarch64:
+    if: inputs.package_name == 'glog_0.6.0' || inputs.package_name == 'all_package'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@main
+        with:
+          repository: 'google/glog'
+          ref: 'v0.6.0'
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@master
+      - name: Build Script
+        run: |
+          cat <<'EOF' > build.sh
+            #!/bin/bash
+            uname -a
+            mkdir /opt/build
+            cd /opt/build
+            cmake .. \
+               -D CMAKE_INSTALL_PREFIX=/usr/local \
+               -D CMAKE_INSTALL_LIBDIR=/usr/local/lib64 \
+               -D CMAKE_POSITION_INDEPENDENT_CODE=ON \
+               -D BUILD_SHARED_LIBS=ON \
+               -D CMAKE_BUILD_TYPE=Release
+            make -j$[$(nproc) * 2]' >> build.sh
+            make install
+            ldd /usr/local/lib64/libglog.so
+            cp -af /usr/local/{lib64,include} /opt/
+          EOF
+          cat build.sh
+      - name: Build
+        run: |
+          docker run --rm -t --platform=arm64 \
+                 -v $(pwd):/opt/ \
+                 ghcr.io/zxk114/develop-openeuler2003:latest \
+                 bash -x /opt/build.sh
+      - name: Package
+        run: |
+          sudo rm -rf lib64/python* lib64/*.a
+          sudo ls -lh lib64 include
+          sudo tar zcf glog_0.6.0-openeuler20.03-aarch64.tar.gz lib64
+          sudo tar zcf glog_0.6.0-devel-openeuler20.03-aarch64.tar.gz lib64 include
+      - name: Upload Artifact
+        uses: actions/upload-artifact@main
+        with:
+          name: glog_0.6.0-openeuler20.03-aarch64
+          path: |
+            glog_0.6.0-openeuler20.03-aarch64.tar.gz
+            glog_0.6.0-devel-openeuler20.03-aarch64.tar.gz
+
+ #****************************package_mqtt_openeuler******************************************
+
+  package_mqtt_x86_64:
+    if: inputs.package_name == 'mqtt_1.3.12' || inputs.package_name == 'all_package'
+    runs-on: ubuntu-latest
+    container: ghcr.io/zxk114/develop-openeuler2003
+    steps:
+      - name: Checkout
+        uses: actions/checkout@main
+      - name: Package
+        run: |
+          curl -LO https://github.com/eclipse/paho.mqtt.c/releases/download/v1.3.12/Eclipse-Paho-MQTT-C-1.3.12-Linux.tar.gz.zip
+          unzip Eclipse-Paho-MQTT-C-1.3.12-Linux.tar.gz.zip
+          tar zxf Eclipse-Paho-MQTT-C-1.3.12-Linux.tar.gz
+          cd Eclipse-Paho-MQTT-C-1.3.12-Linux
+          mv lib lib64
+          ls -lh bin lib64 include share
+          tar zcf mqtt_1.3.12-openeuler20.03-x86_64.tar.gz bin lib64
+          tar zcf mqtt_1.3.12-devel-openeuler20.03-x86_64.tar.gz bin lib64 include share
+          ldd lib64/libpaho-mqtt3cs.so
+          cp -af *.tar.gz ../
+      - name: Upload Artifact
+        uses: actions/upload-artifact@main
+        with:
+          name: mqtt_1.3.12-openeuler20.03-x86_64
+          path: |
+            mqtt_1.3.12-openeuler20.03-x86_64.tar.gz
+            mqtt_1.3.12-devel-openeuler20.03-x86_64.tar.gz
+
+  package_mqtt_aarch64:
+    if: inputs.package_name == 'mqtt_1.3.12' || inputs.package_name == 'all_package'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@main
+        with:
+          repository: 'eclipse/paho.mqtt.c'
+          ref: 'v1.3.12'
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@master
+      - name: Build Script
+        run: |
+          cat <<'EOF' > build.sh
+            #!/bin/bash
+            uname -a
+            mkdir /opt/build
+            cd /opt/build
+            cmake .. \
+               -D CMAKE_INSTALL_PREFIX=/usr/local \
+               -D CMAKE_INSTALL_LIBDIR=/usr/local/lib64 \
+               -D PAHO_WITH_SSL=TRUE
+            make -j$[$(nproc) * 2]' >> build.sh
+            rm -rf /usr/local/{bin,lib64,include,share}/*' >> build.sh
+            make install
+            ldd /usr/local/lib64/libpaho-mqtt3cs.so
+            cp -af /usr/local/{bin,lib64,include,share} /opt/
+          EOF
+          cat build.sh
+      - name: Build
+        run: |
+          docker run --rm -t --platform=arm64 \
+                 -v $(pwd):/opt/ \
+                 ghcr.io/zxk114/develop-openeuler2003:latest \
+                 bash -x /opt/build.sh
+      - name: Package
+        run: |
+          sudo rm -rf lib64/python* lib64/*.a
+          sudo ls -lh bin lib64 include share
+          sudo tar zcf mqtt_1.3.12-openeuler20.03-aarch64.tar.gz bin lib64
+          sudo tar zcf mqtt_1.3.12-devel-openeuler20.03-aarch64.tar.gz bin lib64 include share
+      - name: Upload Artifact
+        uses: actions/upload-artifact@main
+        with:
+          name: mqtt_1.3.12-openeuler20.03-aarch64
+          path: |
+            mqtt_1.3.12-openeuler20.03-aarch64.tar.gz
+            mqtt_1.3.12-devel-openeuler20.03-aarch64.tar.gz
+
+#****************************package_ffmpeg_openeuler******************************************
+
+  package_ffmpeg_x86_64:
+    if: inputs.package_name == 'ffmpeg_4.4.3' || inputs.package_name == 'all_package'
+    runs-on: ubuntu-latest
+    container: ghcr.io/zxk114/develop-openeuler2003
+    steps:
+      - name: Checkout
+        uses: actions/checkout@main
+        with:
+          repository: 'FFmpeg/FFmpeg'
+          ref: 'n4.4.3'
+      - name: Checkout librtmp
+        uses: actions/checkout@main
+        with:
+          repository: 'ossrs/librtmp'
+          path: 'librtmp'
+      - name: Checkout headers
+        uses: actions/checkout@main
+        with:
+          repository: 'FFmpeg/nv-codec-headers'
+          path: 'nv-codec-headers'
+      - name: Build rtmpdump
+        run: |
+          cd librtmp
+          sed -i '/GNUTLS/s/^#//' Makefile librtmp/Makefile
+          sed -i '/OPENSSL/s/^/#&/' Makefile librtmp/Makefile
+          make -j$[$(nproc) * 2]
+          make install
+      - name: Build nv-codec-headers
+        run: |
+          cd nv-codec-headers
+          make -j$[$(nproc) * 2]
+          make install
+          mv /usr/local/lib/* /usr/local/lib64/
+          sed -i 's;/lib;/lib64;g' /usr/local/lib64/pkgconfig/librtmp.pc
+          ls -lh /usr/local/{bin,lib64,include,share}
+          ls -lh /usr/local/lib64/pkgconfig/
+      - name: CMake
+        run: |
+          export PKG_CONFIG_PATH=/usr/local/lib64/pkgconfig
+          ./configure \
+              --prefix=/usr/local \
+              --libdir=/usr/local/lib64 \
+              --enable-shared \
+              --disable-doc \
+              --enable-gpl \
+              --enable-pthreads \
+              --enable-ffplay \
+              --enable-openssl \
+              --enable-nonfree \
+              --enable-librtmp
+      - name: Build
+        run: |
+          make -j$[$(nproc) * 2]
+          make install
+      - name: Package
+        run: |
+          cd /usr/local/
+          rm -rf lib64/python* lib64/*.a
+          ls -lh bin lib64 include share
+          tar zcf ffmpeg_4.4.3-openeuler20.03-x86_64.tar.gz bin lib64
+          tar zcf ffmpeg_4.4.3-devel-openeuler20.03-x86_64.tar.gz bin lib64 include share
+      - name: Upload Artifact
+        uses: actions/upload-artifact@main
+        with:
+          name: ffmpeg_4.4.3-openeuler20.03-x86_64
+          path: |
+            /usr/local/ffmpeg_4.4.3-openeuler20.03-x86_64.tar.gz
+            /usr/local/ffmpeg_4.4.3-devel-openeuler20.03-x86_64.tar.gz
+
+  package_ffmpeg_aarch64:
+    if: inputs.package_name == 'ffmpeg_4.4.3' || inputs.package_name == 'all_package'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@main
+        with:
+          repository: 'FFmpeg/FFmpeg'
+          ref: 'n4.4.3'
+      - name: Checkout librtmp
+        uses: actions/checkout@main
+        with:
+          repository: 'ossrs/librtmp'
+          path: 'librtmp'
+      - name: Checkout headers
+        uses: actions/checkout@main
+        with:
+          repository: 'FFmpeg/nv-codec-headers'
+          path: 'nv-codec-headers'
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@master
+      - name: Build Script
+        run: |
+          cat <<'EOF' > build.sh
+            #!/bin/bash
+            uname -a
+            cd /opt/librtmp
+            sed -i '/GNUTLS/s/^#//' Makefile librtmp/Makefile
+            sed -i '/OPENSSL/s/^/#&/' Makefile librtmp/Makefile
+            make -j$[$(nproc) * 2]' >> build.sh
+            make install
+            cd /opt/nv-codec-headers
+            make -j$[$(nproc) * 2]' >> build.sh
+            make install
+            mv /usr/local/lib/* /usr/local/lib64/
+            sed -i 's;/lib;/lib64;g' /usr/local/lib64/pkgconfig/librtmp.pc
+            cd /opt
+            export PKG_CONFIG_PATH=/usr/local/lib64/pkgconfig
+            ./configure \
+               --prefix=/usr/local \
+               --libdir=/usr/local/lib64 \
+               --enable-shared \
+               --disable-doc \
+               --enable-gpl \
+               --enable-pthreads \
+               --enable-ffplay \
+               --enable-openssl \
+               --enable-nonfree \
+               --enable-librtmp
+            make -j$[$(nproc) * 2]' >> build.sh
+            make install
+            cp -af /usr/local/{bin,lib64,include,share} /opt/
+          EOF
+          cat build.sh
+      - name: Build
+        run: |
+          docker run --rm -t --platform=arm64 \
+                 -v $(pwd):/opt/ \
+                 ghcr.io/zxk114/develop-openeuler2003:latest \
+                 bash -x /opt/build.sh
+      - name: Package
+        run: |
+          sudo rm -rf lib64/python* lib64/*.a
+          sudo ls -lh bin lib64 include share
+          sudo tar zcf ffmpeg_4.4.3-openeuler20.03-aarch64.tar.gz bin lib64
+          sudo tar zcf ffmpeg_4.4.3-devel-openeuler20.03-aarch64.tar.gz bin lib64 include share
+      - name: Upload Artifact
+        uses: actions/upload-artifact@main
+        with:
+          name: ffmpeg_4.4.3-openeuler20.03-aarch64
+          path: |
+            ffmpeg_4.4.3-openeuler20.03-aarch64.tar.gz
+            ffmpeg_4.4.3-devel-openeuler20.03-aarch64.tar.gz
+
+#****************************package_opencv_openeuler******************************************
+
+  package_opencv_x86_64:
+    if: inputs.package_name == 'opencv_4.5.5' || inputs.package_name == 'opencv_4.5.5_x86' || inputs.package_name == 'all_package'
+    runs-on: ubuntu-latest
+    container: ghcr.io/zxk114/develop-openeuler2003
+    steps:
+      - name: Checkout
+        uses: actions/checkout@main
+        with:
+          repository: 'opencv/opencv'
+          ref: '4.5.5'
+      - name: Checkout_3rd
+        uses: actions/checkout@main
+        with:
+          repository: 'opencv/opencv_contrib'
+          ref: '4.5.5'
+          path: 'opencv_contrib'
+      - name: Install FFmpeg
+        run: |
+          curl -LO https://github.com/modelbox-ai/modelbox-binary/releases/download/BinaryArchive/glog_0.6.0-devel-openeuler20.03-x86_64.tar.gz
+          curl -LO https://github.com/modelbox-ai/modelbox-binary/releases/download/BinaryArchive/ffmpeg_4.4.3-devel-openeuler20.03-x86_64.tar.gz
+          ls -lh *.tar.gz
+          tar zxf glog_0.6.0-devel-openeuler20.03-x86_64.tar.gz -C /usr/local
+          tar zxf ffmpeg_4.4.3-devel-openeuler20.03-x86_64.tar.gz -C /usr/local
+      - name: CMake
+        run: |
+          mkdir build
+          cd build
+          export PKG_CONFIG_PATH=/usr/local/lib64/pkgconfig
+          cmake .. \
+                -DOPENCV_EXTRA_MODULES_PATH=../opencv_contrib/modules \
+                -DCMAKE_INSTALL_PREFIX=/usr/local/ \
+                -DINSTALL_LIBDIR=/usr/local/lib64 \
+                -DCMAKE_BUILD_TYPE=Release \
+                -DBUILD_opencv_xfeatures2d=OFF \
+                -DBUILD_opencv_wechat_qrcode=OFF \
+                -DENABLE_CXX11=ON \
+                -DWITH_TBB=ON \
+                -DBUILD_TBB=ON \
+                -DWITH_OPENMP=OFF \
+                -DBUILD_OPENMP=OFF \
+                -DWITH_GSTREAMER=OFF \
+                -DBUILD_TESTS=OFF
+      - name: Build
+        working-directory: build
+        run: |
+          make -j$[$(nproc) * 2]
+          rm -rf /usr/local/{bin,include,lib64,share}/*
+          make install
+      - name: Package
+        run: |
+          cd /usr/local/
+          ln -sf opencv4/opencv2 include/opencv2
+          rm -rf lib64/python* lib64/*.a
+          ls -lh bin include lib64 share
+          tar zcf opencv_4.5.5-openeuler20.03-x86_64.tar.gz bin lib64
+          tar zcf opencv_4.5.5-devel-openeuler20.03-x86_64.tar.gz bin include lib64 share
+      - name: Upload Artifact
+        uses: actions/upload-artifact@main
+        with:
+          name: opencv_4.5.5-openeuler20.03-x86_64
+          path: |
+            /usr/local/opencv_4.5.5-openeuler20.03-x86_64.tar.gz
+            /usr/local/opencv_4.5.5-devel-openeuler20.03-x86_64.tar.gz
+
+  package_opencv_aarch64:
+    if: inputs.package_name == 'opencv_4.5.5' || inputs.package_name == 'opencv_4.5.5_arm' || inputs.package_name == 'all_package'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@main
+        with:
+          repository: 'opencv/opencv'
+          ref: '4.5.5'
+      - name: Checkout_3rd
+        uses: actions/checkout@main
+        with:
+          repository: 'opencv/opencv_contrib'
+          ref: '4.5.5'
+          path: 'opencv_contrib'
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@master
+      - name: Install FFmpeg
+        run: |
+          curl -LO https://github.com/modelbox-ai/modelbox-binary/releases/download/BinaryArchive/glog_0.6.0-devel-openeuler20.03-aarch64.tar.gz
+          curl -LO https://github.com/modelbox-ai/modelbox-binary/releases/download/BinaryArchive/ffmpeg_4.4.3-devel-openeuler20.03-aarch64.tar.gz
+          ls -lh *.tar.gz
+      - name: Build Script
+        run: |
+          cat <<'EOF' > build.sh
+            #!/bin/bash
+            uname -a
+            tar zxf /opt/glog_0.6.0-devel-openeuler20.03-aarch64.tar.gz -C /usr/local
+            tar zxf /opt/ffmpeg_4.4.3-devel-openeuler20.03-aarch64.tar.gz -C /usr/local
+            export PKG_CONFIG_PATH=/usr/local/lib64/pkgconfig
+            mkdir /opt/build
+            cd /opt/build
+            cmake .. \
+                -DOPENCV_EXTRA_MODULES_PATH=../opencv_contrib/modules \
+                -DCMAKE_INSTALL_PREFIX=/usr/local/ \
+                -DINSTALL_LIBDIR=/usr/local/lib64 \
+                -DCMAKE_BUILD_TYPE=Release \
+                -DBUILD_opencv_xfeatures2d=OFF \
+                -DBUILD_opencv_wechat_qrcode=OFF \
+                -DENABLE_CXX11=ON \
+                -DWITH_TBB=ON \
+                -DBUILD_TBB=ON \
+                -DWITH_OPENMP=OFF \
+                -DBUILD_OPENMP=OFF \
+                -DWITH_GSTREAMER=OFF \
+                -DBUILD_TESTS=OFF
+            make -j$[$(nproc) * 2]
+            rm -rf /usr/local/bin/*
+            rm -rf /usr/local/include/*
+            rm -rf /usr/local/lib64/*
+            rm -rf /usr/local/share/*
+            make install
+            cd /usr/local/
+            cp -af bin include lib64 share /opt/
+          EOF
+          cat build.sh
+      - name: Build
+        run: |
+          docker run --rm -t --platform=arm64 \
+                 -v $(pwd):/opt/ \
+                 ghcr.io/zxk114/develop-openeuler2003:latest \
+                 bash -x /opt/build.sh
+      - name: Package
+        run: |
+         sudo rm -rf lib64/python* lib64/*.a
+         sudo ls -lh bin include lib64 share
+         sudo tar zcf opencv_4.5.5-openeuler20.03-aarch64.tar.gz bin lib64
+         sudo tar zcf opencv_4.5.5-devel-openeuler20.03-aarch64.tar.gz bin include lib64 share
+         sudo cp -af *.tar.gz ../
+      - name: Upload Artifact
+        uses: actions/upload-artifact@main
+        with:
+          name: opencv_4.5.5-openeuler20.03-aarch64
+          path: |
+            opencv_4.5.5-openeuler20.03-aarch64.tar.gz
+            opencv_4.5.5-devel-openeuler20.03-aarch64.tar.gz
+
+#****************************package_cpprestsdk_openeuler******************************************
+
+  package_cpprestsdk_x86_64:
+    if: inputs.package_name == 'cpprestsdk_2.10.18' || inputs.package_name == 'all_package'
+    runs-on: ubuntu-latest
+    container: ghcr.io/zxk114/develop-openeuler2003
+    steps:
+      - name: Checkout
+        uses: actions/checkout@main
+        with:
+          repository: 'microsoft/cpprestsdk'
+          ref: 'v2.10.18'
+          submodules: 'recursive'
+      - name: CMake
+        run: |
+          echo 'set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fstack-protector-all -W1,-z,relro,-z,now-z,noexecstack -fPIC")' >>CmakeLists.txt
+          echo 'set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fstack-protector-all -W1,-z,relro,-z,now-z,noexecstack -fPIC")' >>CmakeLists.txt
+          echo 'set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -W1,-z,relro,-z,now-z,noexecstack -pie")' >>CmakeLists.txt
+          echo 'set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -W1,-z,relro,-z,now-z,noexecstack")' >>CmakeLists.txt
+          sed -i '198s/40/1000/g' Release/src/pplx/threadpool.cpp
+          sed -i '91s/"%8zX", bytes_read/"%8X", (std::uint32_t)bytes_read/g' Release/src/http/common/http_helpers.cpp
+          mkdir build
+          cd build
+          cmake -G Ninja .. -DCMAKE_BUILD_TYPE=Release
+      - name: Build
+        working-directory: build
+        run: |
+          ninja
+      - name: Package
+        working-directory: build
+        run: |
+          mkdir lib64
+          cp -af Release/Binaries/libcpprest.so* lib64/
+          cp -af ../Release/include .
+          ls -lh lib64 include
+          tar zcf cpprestsdk_2.10.18-openeuler20.03-x86_64.tar.gz lib64
+          tar zcf cpprestsdk_2.10.18-devel-openeuler20.03-x86_64.tar.gz lib64 include
+          cp -af *.tar.gz ../
+      - name: Upload Artifact
+        uses: actions/upload-artifact@main
+        with:
+          name: cpprestsdk_2.10.18-openeuler20.03-x86_64
+          path: |
+            cpprestsdk_2.10.18-openeuler20.03-x86_64.tar.gz
+            cpprestsdk_2.10.18-devel-openeuler20.03-x86_64.tar.gz
+
+  package_cpprestsdk_aarch64:
+    if: inputs.package_name == 'cpprestsdk_2.10.18' || inputs.package_name == 'all_package'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@main
+        with:
+          repository: 'microsoft/cpprestsdk'
+          ref: 'v2.10.18'
+          submodules: 'recursive'
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@master
+      - name: Configure
+        run: |
+          echo 'set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fstack-protector-all -W1,-z,relro,-z,now-z,noexecstack -fPIC")' >>CmakeLists.txt
+          echo 'set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fstack-protector-all -W1,-z,relro,-z,now-z,noexecstack -fPIC")' >>CmakeLists.txt
+          echo 'set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -W1,-z,relro,-z,now-z,noexecstack -pie")' >>CmakeLists.txt
+          echo 'set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -W1,-z,relro,-z,now-z,noexecstack")' >>CmakeLists.txt
+          sed -i '198s/40/1000/g' Release/src/pplx/threadpool.cpp
+          sed -i '91s/"%8zX", bytes_read/"%8X", (std::uint32_t)bytes_read/g' Release/src/http/common/http_helpers.cpp
+      - name: Build Script
+        run: |
+          cat <<'EOF' > build.sh
+            #!/bin/bash
+            uname -a
+            mkdir -p /opt/build/lib64
+            cd /opt/build
+            cmake .. -DCMAKE_BUILD_TYPE=Release
+            make install -j$[$(nproc) * 2]
+            ldd Release/Binaries/libcpprest.so
+          EOF
+          cat build.sh
+      - name: Build
+        run: |
+          docker run --rm -t --platform=arm64 \
+                 -v $(pwd):/opt/ \
+                 ghcr.io/zxk114/develop-openeuler2003:latest \
+                 bash -x /opt/build.sh
+      - name: Package
+        working-directory: build
+        run: |
+          sudo cp -af Release/Binaries/libcpprest.so* lib64/
+          sudo cp -af ../Release/include .
+          sudo ls -lh lib64 include
+          sudo tar zcf cpprestsdk_2.10.18-openeuler20.03-aarch64.tar.gz lib64
+          sudo tar zcf cpprestsdk_2.10.18-devel-openeuler20.03-aarch64.tar.gz lib64 include
+          sudo cp -af *.tar.gz ../
+      - name: Upload Artifact
+        uses: actions/upload-artifact@main
+        with:
+          name: cpprestsdk_2.10.18-openeuler20.03-aarch64
+          path: |
+            cpprestsdk_2.10.18-openeuler20.03-aarch64.tar.gz
+            cpprestsdk_2.10.18-devel-openeuler20.03-aarch64.tar.gz
+
+#***************************package_duktape_openeuler*******************************************
+
+  package_duktape_x86_64:
+    if: inputs.package_name == 'duktape_2.6.0' || inputs.package_name == 'all_package'
+    runs-on: ubuntu-latest
+    container: ghcr.io/zxk114/develop-openeuler2003
+    steps:
+      - name: Checkout
+        uses: actions/checkout@main
+        with:
+          repository: 'svaarala/duktape'
+          ref: 'v2.6.0'
+      - name: Configure
+        run: |
+          curl -LO https://github.com/svaarala/duktape/releases/download/v2.6.0/duktape-2.6.0.tar.xz
+          tar xf duktape-2.6.0.tar.xz
+      - name: Build
+        run: |
+          cd duktape-2.6.0/src
+          gcc ./duktape.c -fPIC --shared -o libduktape.so
+          ldd libduktape.so
+      - name: Package
+        run: |
+          mkdir lib64 include
+          cp -af duktape-2.6.0/src/libduktape.so lib64/
+          cp -af duktape-2.6.0/src/*.h include/
+          ls -lh lib64 include
+          tar zcf duktape_2.6.0-openeuler20.03-x86_64.tar.gz lib64
+          tar zcf duktape_2.6.0-devel-openeuler20.03-x86_64.tar.gz lib64 include
+      - name: Upload Artifact
+        uses: actions/upload-artifact@main
+        with:
+          name: duktape_2.6.0-openeuler20.03-x86_64
+          path: |
+            duktape_2.6.0-openeuler20.03-x86_64.tar.gz
+            duktape_2.6.0-devel-openeuler20.03-x86_64.tar.gz
+
+  package_duktape_aarch64:
+    runs-on: ubuntu-latest
+    if: inputs.package_name == 'duktape_2.6.0' || inputs.package_name == 'all_package'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@main
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@master
+      - name: Configure
+        run: |
+          curl -LO https://github.com/svaarala/duktape/releases/download/v2.6.0/duktape-2.6.0.tar.xz
+          tar xf duktape-2.6.0.tar.xz
+      - name: Build Script
+        run: |
+          cd duktape-2.6.0
+          cat <<'EOF' > build.sh
+            #!/bin/bash
+            uname -a
+            cd /opt/src
+            gcc ./duktape.c -fPIC --shared -o libduktape.so
+            ldd libduktape.so
+          EOF
+          cat build.sh
+      - name: Build 
+        run: |
+          docker run --rm -t --platform=arm64 \
+                 -v $(pwd):/opt/ \
+                 ghcr.io/zxk114/develop-openeuler2003:latest \
+                 bash -x /opt/build.sh
+      - name: Package
+        run: |
+          sudo mkdir lib64 include
+          sudo cp -af duktape-2.6.0/src/libduktape.so lib64/
+          sudo cp -af duktape-2.6.0/src/*.h include/
+          sudo ls -lh lib64 include
+          sudo tar zcf duktape_2.6.0-openeuler20.03-aarch64.tar.gz lib64
+          sudo tar zcf duktape_2.6.0-devel-openeuler20.03-aarch64.tar.gz lib64 include
+      - name: Upload Artifact
+        uses: actions/upload-artifact@main
+        with:
+          name: duktape_2.6.0-openeuler20.03-aarch64
+          path: |
+            duktape_2.6.0-openeuler20.03-aarch64.tar.gz
+            duktape_2.6.0-devel-openeuler20.03-aarch64.tar.gz

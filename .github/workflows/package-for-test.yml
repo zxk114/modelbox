@@ -1,0 +1,327 @@
+name: Package for test
+
+on:
+  workflow_dispatch:
+    inputs:
+      package_name:
+        type: choice
+        description: package for test
+        options: 
+        - test_docker
+        - test_images
+        - ----------
+        - openeuler
+        - opencv_2003
+        - opencv_2203
+        - ubuntu
+        - opencv_1804
+        - opencv_2004
+        - all_package
+
+jobs:
+  test_docker:
+    if: inputs.package_name == 'test_docker'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@main
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@master
+      - name: Build Script
+        run: |
+          cat <<'EOF' > build.sh
+            #!/bin/bash
+            uname -m
+            cat /etc/os-release
+          EOF
+          cat build.sh
+      - name: Docker
+        run: |
+          docker run --rm -t --platform=arm64 \
+                 -v $(pwd):/opt/ \
+                 ghcr.io/zxk114/develop-openeuler2003:latest \
+                 bash -x /opt/build.sh
+
+  test_images:
+    if: inputs.package_name == 'test_images'
+    runs-on: ubuntu-latest
+    container: ghcr.io/zxk114/develop-${{ matrix.images }}
+    strategy:
+      matrix:
+        images:
+          - openeuler2003
+          - openeuler2203
+          - openeuler2303
+          - ubuntu1804
+          - ubuntu2004
+          - ubuntu2204
+    steps:
+      - name: Checkout
+        uses: actions/checkout@main
+      - name: Check Script
+        run: |
+          ls -lh /usr/local/*
+
+          OS_NAME=$(sed -nr '/NAME/s/^NAME="(.*)"$/\1/gp' /etc/os-release)
+          OS_VER=$(sed -nr '/VERSION_ID/s/^VERSION_ID="(.*)"$/\1/gp' /etc/os-release)
+
+          echo "OS_NAME: $OS_NAME"
+          echo "OS_VER: $OS_VER"
+        shell: bash
+
+  package_build_opencv_openeuler2003:
+    if: inputs.package_name == 'opencv_2003' || inputs.package_name == 'openeuler' || inputs.package_name == 'all_package'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@main
+        with:
+          repository: 'opencv/opencv'
+          ref: '4.5.5'
+          path: 'opencv2003'
+      - name: Checkout_3rd
+        uses: actions/checkout@main
+        with:
+          repository: 'opencv/opencv_contrib'
+          ref: '4.5.5'
+          path: 'opencv2003/opencv_contrib'
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@master
+      - name: Install FFmpeg
+        run: |
+          curl -LO https://github.com/modelbox-ai/modelbox-binary/releases/download/BinaryArchive/glog_0.6.0-devel-openeuler20.03-aarch64.tar.gz
+          curl -LO https://github.com/modelbox-ai/modelbox-binary/releases/download/BinaryArchive/ffmpeg_4.4.3-devel-openeuler20.03-aarch64.tar.gz
+      - name: Build Script
+        run: |
+          cat <<EOF > build.sh
+            #!/bin/bash
+            uname -a
+            python2 -m pip install numpy
+            python3 -m pip install numpy
+            tar zxf /opt/glog_0.6.0-devel-openeuler20.03-aarch64.tar.gz -C /usr/local
+            tar zxf /opt/ffmpeg_4.4.3-devel-openeuler20.03-aarch64.tar.gz -C /usr/local
+            export PKG_CONFIG_PATH=/usr/local/lib64/pkgconfig
+            mkdir /opt/opencv2003/build
+            cd /opt/opencv2003/build
+            cmake .. \
+                -DOPENCV_EXTRA_MODULES_PATH=../opencv_contrib/modules \
+                -DCMAKE_INSTALL_PREFIX=./release/ \
+                -DINSTALL_LIBDIR=./release/lib64 \
+                -DCMAKE_BUILD_TYPE=Release \
+                -DBUILD_opencv_xfeatures2d=OFF \
+                -DBUILD_opencv_wechat_qrcode=OFF \
+                -DENABLE_CXX11=ON \
+                -DWITH_TBB=ON \
+                -DBUILD_TBB=ON \
+                -DWITH_OPENMP=OFF \
+                -DBUILD_OPENMP=OFF \
+                -DWITH_GSTREAMER=OFF \
+                -DBUILD_TESTS=OFF
+          EOF
+          cat build.sh
+      - name: Cmake
+        run: |
+          docker run --rm -t --platform=arm64 \
+                 -v $(pwd):/opt/ \
+                 ghcr.io/zxk114/develop-openeuler2003:latest \
+                 bash -x /opt/build.sh
+      - name: Package Cmake
+        run: |
+         sudo tar zcf opencv_4.5.5-openeuler20.03-build.tar.gz opencv2003
+      - name: Upload Artifact
+        uses: actions/upload-artifact@main
+        with:
+          name: opencv_4.5.5-openeuler20.03-build
+          path: |
+            opencv_4.5.5-openeuler20.03-build.tar.gz
+
+  package_build_opencv_openeuler2203:
+    if: inputs.package_name == 'opencv_2203' || inputs.package_name == 'openeuler' || inputs.package_name == 'all_package'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@main
+        with:
+          repository: 'opencv/opencv'
+          ref: '4.5.5'
+          path: 'opencv2203'
+      - name: Checkout_3rd
+        uses: actions/checkout@main
+        with:
+          repository: 'opencv/opencv_contrib'
+          ref: '4.5.5'
+          path: 'opencv2203/opencv_contrib'
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@master
+      - name: Install FFmpeg
+        run: |
+          curl -LO https://github.com/modelbox-ai/modelbox-binary/releases/download/BinaryArchive/glog_0.6.0-devel-openeuler22.03-aarch64.tar.gz
+          curl -LO https://github.com/modelbox-ai/modelbox-binary/releases/download/BinaryArchive/ffmpeg_4.4.3-devel-openeuler22.03-aarch64.tar.gz
+      - name: Build Script
+        run: |
+          cat <<'EOF' > build.sh
+            #!/bin/bash
+            uname -a
+            python3 -m pip install numpy
+            tar zxf /opt/glog_0.6.0-devel-openeuler22.03-aarch64.tar.gz -C /usr/local
+            tar zxf /opt/ffmpeg_4.4.3-devel-openeuler22.03-aarch64.tar.gz -C /usr/local
+            export PKG_CONFIG_PATH=/usr/local/lib64/pkgconfig
+            mkdir /opt/opencv2203/build
+            cd /opt/opencv2203/build
+            cmake .. \
+                -DOPENCV_EXTRA_MODULES_PATH=../opencv_contrib/modules \
+                -DCMAKE_INSTALL_PREFIX=./release/ \
+                -DINSTALL_LIBDIR=./release/lib64 \
+                -DCMAKE_BUILD_TYPE=Release \
+                -DBUILD_opencv_xfeatures2d=OFF \
+                -DBUILD_opencv_wechat_qrcode=OFF \
+                -DENABLE_CXX11=ON \
+                -DWITH_TBB=ON \
+                -DBUILD_TBB=ON \
+                -DWITH_OPENMP=OFF \
+                -DBUILD_OPENMP=OFF \
+                -DWITH_GSTREAMER=OFF \
+                -DBUILD_TESTS=OFF
+          EOF
+          cat build.sh
+      - name: Cmake
+        run: |
+          docker run --rm -t --platform=arm64 \
+                 -v $(pwd):/opt/ \
+                 ghcr.io/zxk114/develop-openeuler2203:latest \
+                 bash -x /opt/build.sh
+      - name: Package Cmake
+        run: |
+         sudo tar zcf opencv_4.5.5-openeuler22.03-build.tar.gz opencv2203
+      - name: Upload Artifact
+        uses: actions/upload-artifact@main
+        with:
+          name: opencv_4.5.5-openeuler22.03-build
+          path: |
+            opencv_4.5.5-openeuler22.03-build.tar.gz
+  
+  package_build_opencv_ubuntu1804:
+    if: inputs.package_name == 'opencv_1804' || inputs.package_name == 'ubuntu' || inputs.package_name == 'all_package'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@main
+        with:
+          repository: 'opencv/opencv'
+          ref: '4.5.5'
+          path: 'opencv1804'
+      - name: Checkout_3rd
+        uses: actions/checkout@main
+        with:
+          repository: 'opencv/opencv_contrib'
+          ref: '4.5.5'
+          path: 'opencv1804/opencv_contrib'
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@master
+      - name: Build Script
+        run: |
+          cat <<EOF > build.sh
+            #!/bin/bash
+            uname -a
+            apt update
+            apt install -y build-essential
+            apt install -y cmake libgtk-3-dev pkg-config libavcodec-dev libavformat-dev libswscale-dev
+            apt install -y python3-numpy libtbb2 libtbb-dev libjpeg-dev libpng-dev libtiff-dev
+            rm -f /usr/bin/python2*
+            export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig
+            mkdir /opt/opencv1804/build
+            cd /opt/opencv1804/build
+            cmake .. \
+                -DOPENCV_EXTRA_MODULES_PATH=../opencv_contrib/modules \
+                -DCMAKE_INSTALL_PREFIX=./release/ \
+                -DINSTALL_LIBDIR=./release/lib \
+                -DCMAKE_BUILD_TYPE=Release \
+                -DBUILD_opencv_xfeatures2d=OFF \
+                -DBUILD_opencv_wechat_qrcode=OFF \
+                -DENABLE_CXX11=ON \
+                -DWITH_TBB=ON \
+                -DBUILD_TBB=ON \
+                -DWITH_OPENMP=OFF \
+                -DBUILD_OPENMP=OFF \
+                -DWITH_GSTREAMER=OFF \
+                -DBUILD_TESTS=OFF
+          EOF
+          cat build.sh
+      - name: Cmake
+        run: |
+          docker run --rm -t --platform=arm64 \
+                 -v $(pwd):/opt/ \
+                 ghcr.io/zxk114/develop-ubuntu1804:latest \
+                 bash -x /opt/build.sh
+      - name: Package
+        run: |
+         sudo tar zcf opencv_4.5.5-ubuntu18.04-build.tar.gz opencv1804
+      - name: Upload Artifact
+        uses: actions/upload-artifact@main
+        with:
+          name: opencv_4.5.5-ubuntu18.04-build
+          path: |
+            opencv_4.5.5-ubuntu18.04-build.tar.gz
+
+  package_build_opencv_ubuntu2004:
+    if: inputs.package_name == 'opencv_2004' || inputs.package_name == 'ubuntu' || inputs.package_name == 'all_package'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@main
+        with:
+          repository: 'opencv/opencv'
+          ref: '4.5.5'
+          path: 'opencv2004'
+      - name: Checkout_3rd
+        uses: actions/checkout@main
+        with:
+          repository: 'opencv/opencv_contrib'
+          ref: '4.5.5'
+          path: 'opencv2004/opencv_contrib'
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@master
+      - name: Build Script
+        run: |
+          cat <<'EOF' > build.sh
+            #!/bin/bash
+            uname -a
+            apt update
+            apt install -y build-essential
+            apt install -y cmake libgtk-3-dev pkg-config libavcodec-dev libavformat-dev libswscale-dev
+            apt install -y python3-numpy libtbb2 libtbb-dev libjpeg-dev libpng-dev libtiff-dev
+            rm -f /usr/bin/python2*
+            export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig
+            mkdir /opt/opencv2004/build
+            cd /opt/opencv2004/build
+            cmake .. \
+                -DOPENCV_EXTRA_MODULES_PATH=../opencv_contrib/modules \
+                -DCMAKE_INSTALL_PREFIX=./release/ \
+                -DINSTALL_LIBDIR=./release/lib64 \
+                -DCMAKE_BUILD_TYPE=Release \
+                -DBUILD_opencv_xfeatures2d=OFF \
+                -DBUILD_opencv_wechat_qrcode=OFF \
+                -DENABLE_CXX11=ON \
+                -DWITH_TBB=ON \
+                -DBUILD_TBB=ON \
+                -DWITH_OPENMP=OFF \
+                -DBUILD_OPENMP=OFF \
+                -DWITH_GSTREAMER=OFF \
+                -DBUILD_TESTS=OFF
+          EOF
+          cat build.sh
+      - name: Cmake
+        run: |
+          docker run --rm -t --platform=arm64 \
+                 -v $(pwd):/opt/ \
+                 ghcr.io/zxk114/develop-ubuntu2004:latest \
+                 bash -x /opt/build.sh
+      - name: Package
+        run: |
+         sudo tar zcf opencv_4.5.5-ubuntu20.04-build.tar.gz opencv2004
+      - name: Upload Artifact
+        uses: actions/upload-artifact@main
+        with:
+          name: opencv_4.5.5-ubuntu20.04-build
+          path: |
+            opencv_4.5.5-ubuntu20.04-build.tar.gz

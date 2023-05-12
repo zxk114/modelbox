@@ -1,0 +1,311 @@
+name: Package for Ubuntu18.04
+
+on:
+  workflow_dispatch:
+    inputs:
+      package_name:
+        type: choice
+        description: Package for Ubuntu18.04
+        options: 
+        - opencv_4.5.5_x86
+        - opencv_4.5.5_arm
+        - glog_0.6.0
+        - mqtt_1.3.12
+        - all_package
+
+jobs:
+
+#****************************package_opencv_ubuntu******************************************
+
+  package_opencv_x86_64:
+    if: inputs.package_name == 'opencv_4.5.5_x86' || inputs.package_name == 'all_package'
+    runs-on: ubuntu-latest
+    container: ghcr.io/zxk114/develop-ubuntu1804
+    steps:
+      - name: Checkout
+        uses: actions/checkout@main
+        with:
+          repository: 'opencv/opencv'
+          ref: '4.5.5'
+      - name: Checkout_3rd
+        uses: actions/checkout@main
+        with:
+          repository: 'opencv/opencv_contrib'
+          ref: '4.5.5'
+          path: 'opencv_contrib'
+      - name: CMake
+        run: |
+          python3 -m pip install numpy
+          apt update
+          apt install -y build-essential
+          apt install -y cmake libgtk-3-dev pkg-config libavcodec-dev libavformat-dev libswscale-dev
+          apt install -y python3-numpy libtbb2 libtbb-dev libjpeg-dev libpng-dev libtiff-dev
+          rm -f /usr/bin/python2*
+          export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig
+          mkdir build
+          cd build
+          cmake .. \
+                -DOPENCV_EXTRA_MODULES_PATH=../opencv_contrib/modules \
+                -DCMAKE_INSTALL_PREFIX=./release \
+                -DINSTALL_LIBDIR=./release/lib \
+                -DCMAKE_BUILD_TYPE=Release \
+                -DBUILD_opencv_xfeatures2d=OFF \
+                -DBUILD_opencv_wechat_qrcode=OFF \
+                -DENABLE_CXX11=ON \
+                -DWITH_TBB=ON \
+                -DBUILD_TBB=ON \
+                -DWITH_OPENMP=OFF \
+                -DBUILD_OPENMP=OFF \
+                -DWITH_GSTREAMER=OFF \
+                -DBUILD_TESTS=OFF
+      - name: Build
+        working-directory: build
+        run: |
+          make -j4
+          make install
+      - name: Package
+        run: |
+          cd build/release
+          ln -sf opencv4/opencv2 include/opencv2
+          rm -rf lib/python* lib/*.a
+          ls -lh bin lib include share
+          tar zcf opencv_4.5.5-ubuntu18.04-x86_64.tar.gz bin lib
+          tar zcf opencv_4.5.5-dev-ubuntu18.04-x86_64.tar.gz bin lib include share
+          cp -af *.tar.gz ../../
+      - name: Upload Artifact
+        uses: actions/upload-artifact@main
+        with:
+          name: opencv_4.5.5-ubuntu18.04-x86_64
+          path: |
+            opencv_4.5.5-ubuntu18.04-x86_64.tar.gz
+            opencv_4.5.5-dev-ubuntu18.04-x86_64.tar.gz
+
+  package_opencv_aarch64:
+    if: inputs.package_name == 'opencv_4.5.5_arm' || inputs.package_name == 'all_package'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@main
+        with:
+          repository: 'opencv/opencv'
+          ref: '4.5.5'
+      - name: Checkout_3rd
+        uses: actions/checkout@main
+        with:
+          repository: 'opencv/opencv_contrib'
+          ref: '4.5.5'
+          path: 'opencv_contrib'
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@master
+      - name: Build Script
+        run: |
+          echo "#!/bin/bash" >> build.sh
+          echo "uname -a" >> build.sh
+          echo "export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig" >> build.sh
+          echo "mkdir /opt/build" >> build.sh
+          echo "cd /opt/build" >> build.sh
+          echo "cmake .. \
+                -DOPENCV_EXTRA_MODULES_PATH=../opencv_contrib/modules \
+                -DCMAKE_INSTALL_PREFIX=./release \
+                -DINSTALL_LIBDIR=./release/lib \
+                -DCMAKE_BUILD_TYPE=Release \
+                -DBUILD_opencv_xfeatures2d=OFF \
+                -DBUILD_opencv_wechat_qrcode=OFF \
+                -DENABLE_CXX11=ON \
+                -DWITH_TBB=ON \
+                -DBUILD_TBB=ON \
+                -DWITH_OPENMP=OFF \
+                -DBUILD_OPENMP=OFF \
+                -DWITH_GSTREAMER=OFF \
+                -DBUILD_TESTS=OFF" >> build.sh
+          echo "make -j$[$(nproc) * 2]" >> build.sh
+          echo "make install" >> build.sh
+          echo "cd release" >> build.sh
+          echo "ln -sf opencv4/opencv2 include/opencv2" >> build.sh
+          echo "cp -af bin lib include share /opt/" >> build.sh
+          cat build.sh
+      - name: Build and Package
+        run: |
+          docker run --rm -t --platform=arm64 \
+                 -v $(pwd):/opt/ \
+                 ghcr.io/zxk114/develop-ubuntu1804:latest \
+                 bash -x /opt/build.sh
+      - name: Package
+        run: |
+          sudo ls -lh bin lib include share
+          sudo tar zcf opencv_4.5.5-ubuntu18.04-x86_64.tar.gz bin lib
+          sudo tar zcf opencv_4.5.5-dev-ubuntu18.04-x86_64.tar.gz bin lib include share
+      - name: Upload Artifact
+        uses: actions/upload-artifact@main
+        with:
+          name: opencv_4.5.5-ubuntu18.04-aarch64
+          path: |
+            opencv_4.5.5-ubuntu18.04-aarch64.tar.gz
+            opencv_4.5.5-dev-ubuntu18.04-aarch64.tar.gz
+
+ #****************************package_glog_ubuntu******************************************
+
+  package_glog_x86_64:
+    if: inputs.package_name == 'glog_0.6.0' || inputs.package_name == 'all_package'
+    runs-on: ubuntu-latest
+    container: ghcr.io/zxk114/develop-ubuntu1804
+    steps:
+      - name: Checkout
+        uses: actions/checkout@main
+        with:
+          repository: 'google/glog'
+          ref: 'v0.6.0'
+      - name: CMake
+        run: |
+          mkdir build
+          cd build
+          cmake .. \
+               -D CMAKE_INSTALL_PREFIX=/usr/local \
+               -D CMAKE_INSTALL_LIBDIR=/usr/local/lib \
+               -D CMAKE_POSITION_INDEPENDENT_CODE=ON \
+               -D BUILD_SHARED_LIBS=ON \
+               -D CMAKE_BUILD_TYPE=Release
+      - name: Build
+        working-directory: build
+        run: |
+          make -j$[$(nproc) * 2]
+          rm -rf /usr/local/lib/*
+          make install
+      - name: Package
+        run: |
+          cd /usr/local
+          ls -lh lib include
+          tar zcf glog_0.6.0-ubuntu18.04-x86_64.tar.gz lib
+          tar zcf glog_0.6.0-dev-ubuntu18.04-x86_64.tar.gz lib include
+          ldd lib/libglog.so
+      - name: Upload Artifact
+        uses: actions/upload-artifact@main
+        with:
+          name: glog_0.6.0-ubuntu18.04-x86_64
+          path: |
+            /usr/local/glog_0.6.0-ubuntu18.04-x86_64.tar.gz
+            /usr/local/glog_0.6.0-dev-ubuntu18.04-x86_64.tar.gz
+
+  package_glog_aarch64:
+    if: inputs.package_name == 'glog_0.6.0' || inputs.package_name == 'all_package'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@main
+        with:
+          repository: 'google/glog'
+          ref: 'v0.6.0'
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@master
+      - name: Build Script
+        run: |
+          echo "#!/bin/bash" >> build.sh
+          echo "uname -a" >> build.sh
+          echo "mkdir /opt/build" >> build.sh
+          echo "cd /opt/build" >> build.sh
+          echo "cmake .. \
+               -D CMAKE_INSTALL_PREFIX=/usr/local \
+               -D CMAKE_INSTALL_LIBDIR=/usr/local/lib \
+               -D CMAKE_POSITION_INDEPENDENT_CODE=ON \
+               -D BUILD_SHARED_LIBS=ON \
+               -D CMAKE_BUILD_TYPE=Release" >> build.sh
+          echo "make -j$[$(nproc) * 2]" >> build.sh
+          echo "rm -rf /usr/local/lib/*" >> build.sh
+          echo "make install" >> build.sh
+          echo "cd /usr/local" >> build.sh
+          echo "cp -af lib include /opt/" >> build.sh
+          echo "ldd /usr/local/lib/libglog.so" >> build.sh
+          cat build.sh
+      - name: Build
+        run: |
+          docker run --rm -t --platform=arm64 \
+                 -v $(pwd):/opt/ \
+                 ghcr.io/zxk114/develop-ubuntu1804:latest \
+                 bash -x /opt/build.sh
+      - name: Package
+        run: |
+          sudo ls -lh lib include
+          sudo tar zcf glog_0.6.0-ubuntu18.04-aarch64.tar.gz lib
+          sudo tar zcf glog_0.6.0-dev-ubuntu18.04-aarch64.tar.gz lib include
+      - name: Upload Artifact
+        uses: actions/upload-artifact@main
+        with:
+          name: glog_0.6.0-ubuntu18.04-aarch64
+          path: |
+            glog_0.6.0-ubuntu18.04-aarch64.tar.gz
+            glog_0.6.0-dev-ubuntu18.04-aarch64.tar.gz
+
+ #****************************package_mqtt_ubuntu******************************************
+
+  package_mqtt_x86_64:
+    if: inputs.package_name == 'mqtt_1.3.12' || inputs.package_name == 'all_package'
+    runs-on: ubuntu-latest
+    container: ghcr.io/zxk114/develop-ubuntu1804
+    steps:
+      - name: Checkout
+        uses: actions/checkout@main
+      - name: Package
+        run: |
+          curl -LO https://github.com/eclipse/paho.mqtt.c/releases/download/v1.3.12/Eclipse-Paho-MQTT-C-1.3.12-Linux.tar.gz.zip
+          unzip Eclipse-Paho-MQTT-C-1.3.12-Linux.tar.gz.zip
+          tar zxf Eclipse-Paho-MQTT-C-1.3.12-Linux.tar.gz
+          cd Eclipse-Paho-MQTT-C-1.3.12-Linux
+          ls -lh bin lib include share
+          tar zcf mqtt_1.3.12-ubuntu18.04-x86_64.tar.gz bin lib
+          tar zcf mqtt_1.3.12-dev-ubuntu18.04-x86_64.tar.gz bin lib include share
+          ldd lib/libpaho-mqtt3cs.so
+          cp -af *.tar.gz ../
+      - name: Upload Artifact
+        uses: actions/upload-artifact@main
+        with:
+          name: mqtt_1.3.12-ubuntu18.04-x86_64
+          path: |
+            mqtt_1.3.12-ubuntu18.04-x86_64.tar.gz
+            mqtt_1.3.12-dev-ubuntu18.04-x86_64.tar.gz
+
+  package_mqtt_aarch64:
+    if: inputs.package_name == 'mqtt_1.3.12' || inputs.package_name == 'all_package'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@main
+        with:
+          repository: 'eclipse/paho.mqtt.c'
+          ref: 'v1.3.12'
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@master
+      - name: Build Script
+        run: |
+          echo "#!/bin/bash" >> build.sh
+          echo "uname -a" >> build.sh
+          echo "mkdir /opt/build" >> build.sh
+          echo "cd /opt/build" >> build.sh
+          echo "cmake .. \
+               -D CMAKE_INSTALL_PREFIX=/usr/local \
+               -D CMAKE_INSTALL_LIBDIR=/usr/local/lib \
+               -D PAHO_WITH_SSL=TRUE" >> build.sh
+          echo "make -j$[$(nproc) * 2]" >> build.sh
+          echo "rm -rf /usr/local/lib/*" >> build.sh
+          echo "make install" >> build.sh
+          echo "cd /usr/local" >> build.sh
+          echo "cp -af bin lib include share /opt/" >> build.sh
+          echo "ldd /usr/local/lib/libpaho-mqtt3cs.so" >> build.sh
+          cat build.sh
+      - name: Build
+        run: |
+          docker run --rm -t --platform=arm64 \
+                 -v $(pwd):/opt/ \
+                 ghcr.io/zxk114/develop-ubuntu1804:latest \
+                 bash -x /opt/build.sh
+      - name: Package
+        run: |
+          sudo ls -lh bin lib include share
+          sudo tar zcf mqtt_1.3.12-ubuntu18.04-aarch64.tar.gz bin lib
+          sudo tar zcf mqtt_1.3.12-dev-ubuntu18.04-aarch64.tar.gz bin lib include share
+      - name: Upload Artifact
+        uses: actions/upload-artifact@main
+        with:
+          name: mqtt_1.3.12-ubuntu18.04-aarch64
+          path: |
+            mqtt_1.3.12-ubuntu18.04-aarch64.tar.gz     
+            mqtt_1.3.12-dev-ubuntu18.04-aarch64.tar.gz     

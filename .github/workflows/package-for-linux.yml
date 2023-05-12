@@ -1,0 +1,123 @@
+name: Package for Linux
+
+on:
+  workflow_dispatch:
+    inputs:
+      package_name:
+        type: choice
+        description: Package for Linux
+        options: 
+        - obssdk_3.23.3
+
+
+jobs:
+
+
+#****************************package_obssdk******************************************
+
+  package_obssdk_x86_64:
+    if: github.event.inputs.package_name == 'obssdk_3.23.3'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@main
+      - name: Package
+        run: |
+          curl -LO https://raw.githubusercontent.com/huaweicloud/huaweicloud-sdk-c-obs/master/release/huaweicloud-obs-sdk-c-linux_3.23.3.2.tgz
+          tar zxf huaweicloud-obs-sdk-c-linux_3.23.3.2.tgz
+          mv lib libs && mkdir lib
+          ls -lh .
+
+          cp -af libs/libcharset.so.1.0.0 lib/
+          ln -sf libcharset.so.1.0.0 lib/libcharset.so.1
+          ln -sf libcharset.so.1 lib/libcharset.so
+
+          cp -af libs/libeSDKLogAPI.so lib/
+          cp -af libs/libeSDKOBS.so lib/
+
+          cp -af libs/libiconv.so.2.6.0 lib/
+          ln -sf libiconv.so.2.6.0 lib/libiconv.so.2
+          ln -sf libiconv.so.2 lib/libiconv.so
+
+          cp -af libs/liblog4cpp.so.5.0.6 lib/
+          ln -sf liblog4cpp.so.5.0.6 lib/liblog4cpp.so.5
+          ln -sf liblog4cpp.so.5 lib/liblog4cpp.so
+
+          cp -af libs/preloadable_libiconv.so lib/
+          cp -af libs/OBS.ini lib/
+          cp -af libs/client.pem lib/
+
+          sed -i 's@LogPath=.*@LogPath=/var/log@g' lib/OBS.ini
+
+          sudo chown -R root.root lib include
+          find . -type d | xargs sudo chmod 755
+          find . -type f | xargs sudo chmod 644
+
+          ls -lh lib include
+          cp -af lib lib64
+          tar zcf obssdk_3.23.3-ubuntu-x86_64.tar.gz lib
+          tar zcf obssdk_3.23.3-devel-ubuntu-x86_64.tar.gz lib include
+          tar zcf obssdk_3.23.3-openeuler-x86_64.tar.gz lib64
+          tar zcf obssdk_3.23.3-devel-openeuler-x86_64.tar.gz lib64 include
+      - name: Upload Artifact
+        uses: actions/upload-artifact@main
+        with:
+          name: obssdk_3.23.3-x86_64
+          path: |
+            obssdk_3.23.3-ubuntu-x86_64.tar.gz
+            obssdk_3.23.3-devel-ubuntu-x86_64.tar.gz
+            obssdk_3.23.3-openeuler-x86_64.tar.gz
+            obssdk_3.23.3-devel-openeuler-x86_64.tar.gz
+
+  package_obssdk_aarch64:
+    if: github.event.inputs.package_name == 'obssdk_3.23.3'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@main
+      - name: Package
+        run: |
+          curl -LO https://raw.githubusercontent.com/huaweicloud/huaweicloud-sdk-c-obs/master/release/huaweicloud-obs-sdk-c-arm_3.23.3.2.tgz
+          tar zxf huaweicloud-obs-sdk-c-arm_3.23.3.2.tgz
+          mv lib libs && mkdir lib
+          ls -lh .
+
+          cp -af libs/libcharset.so.1.0.0 lib/
+          ln -sf libcharset.so.1.0.0 lib/libcharset.so.1
+          ln -sf libcharset.so.1 lib/libcharset.so
+
+          cp -af libs/libeSDKLogAPI.so lib/
+          cp -af libs/libeSDKOBS.so lib/
+
+          cp -af libs/libiconv.so.2.6.0 lib/
+          ln -sf libiconv.so.2.6.0 lib/libiconv.so.2
+          ln -sf libiconv.so.2 lib/libiconv.so
+
+          cp -af libs/liblog4cpp.so.5.0.6 lib/
+          ln -sf liblog4cpp.so.5.0.6 lib/liblog4cpp.so.5
+          ln -sf liblog4cpp.so.5 lib/liblog4cpp.so
+
+          cp -af libs/preloadable_libiconv.so lib/
+          cp -af libs/OBS.ini lib/
+
+          sed -i 's@LogPath=.*@LogPath=/var/log@g' lib/OBS.ini
+
+          sudo chown -R root.root lib include
+          find . -type d | xargs sudo chmod 755
+          find . -type f | xargs sudo chmod 644
+
+          ls -lh lib include
+          cp -af lib lib64
+          tar zcf obssdk_3.23.3-ubuntu-aarch64.tar.gz lib
+          tar zcf obssdk_3.23.3-devel-ubuntu-aarch64.tar.gz lib include
+          tar zcf obssdk_3.23.3-openeuler-aarch64.tar.gz lib64
+          tar zcf obssdk_3.23.3-devel-openeuler-aarch64.tar.gz lib64 include
+      - name: Upload Artifact
+        uses: actions/upload-artifact@main
+        with:
+          name: obssdk_3.23.3-aarch64
+          path: |
+            obssdk_3.23.3-ubuntu-aarch64.tar.gz
+            obssdk_3.23.3-devel-ubuntu-aarch64.tar.gz
+            obssdk_3.23.3-openeuler-aarch64.tar.gz
+            obssdk_3.23.3-devel-openeuler-aarch64.tar.gz
