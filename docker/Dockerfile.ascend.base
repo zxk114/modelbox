@@ -15,8 +15,9 @@ RUN mkdir -p /root/.pip && \
     echo "index-url = https://pypi.mirrors.ustc.edu.cn/simple" >>/root/.pip/pip.conf && \
     echo "trusted-host = pypi.mirrors.ustc.edu.cn" >>/root/.pip/pip.conf && \
     echo "timeout = 120" >>/root/.pip/pip.conf && \
-    python3 -m pip install --upgrade pip && \
-    ls -lh ascend/ && groupadd HwHiAiUser && \
+    python3 -m pip install --no-cache-dir --ignore-installed --upgrade pip setuptools && \
+    ls -lh . && pip list && \
+    groupadd HwHiAiUser && \
     useradd -g HwHiAiUser -d /home/HwHiAiUser -m HwHiAiUser
 
 
@@ -25,7 +26,8 @@ FROM base as dev310
 ARG cann_ver="6.0.RC1"
 ARG driver_ver="6.0.rc1"
 
-RUN if [ "$(arch)" = "aarch64" ];then driver_tag=3000;else driver_tag=3010; fi && \
+RUN umask 0022 && \
+    if [ "$(arch)" = "aarch64" ];then driver_tag=3000;else driver_tag=3010; fi && \
     bash ascend/A300-${driver_tag}-npu-driver_${driver_ver}_linux-$(arch).run --quiet --docker && \
     cp -af /usr/local/Ascend/driver/lib64 /root/ && \
     bash ascend/A300-${driver_tag}-npu-driver_${driver_ver}_linux-$(arch).run --quiet --devel && \
@@ -40,17 +42,20 @@ FROM base as run310
 ARG cann_ver="6.0.RC1"
 ARG driver_ver="6.0.rc1"
 
-RUN if [ "$(arch)" = "aarch64" ];then driver_tag=3000;else driver_tag=3010; fi && \
-    bash ascend/A300-${driver_tag}-npu-driver_${driver_ver}_linux-$(arch).run --quiet --docker && \
+RUN umask 0022 && \
+    if [ "$(arch)" = "aarch64" ];then driver_tag=3000;else driver_tag=3010; fi && \
     bash ascend/Ascend-cann-nnae_${cann_ver}_linux-$(arch).run --quiet --install && \
+    bash ascend/A300-${driver_tag}-npu-driver_${driver_ver}_linux-$(arch).run --quiet --docker && \
     ls -lh /usr/local/Ascend/*
+
 
 FROM base as dev310p
 
 ARG cann_ver="6.0.RC1"
 ARG driver_ver="6.0.rc1"
 
-RUN bash ascend/Ascend-hdk-310p-npu-driver_${driver_ver}_linux-$(arch).run --quiet --docker && \
+RUN umask 0022 && \
+    bash ascend/Ascend-hdk-310p-npu-driver_${driver_ver}_linux-$(arch).run --quiet --docker && \
     cp -af /usr/local/Ascend/driver/lib64 /root/ && \
     bash ascend/Ascend-hdk-310p-npu-driver_${driver_ver}_linux-$(arch).run --quiet --devel && \
     cp -af /root/lib64 /usr/local/Ascend/driver/ && \
@@ -58,14 +63,17 @@ RUN bash ascend/Ascend-hdk-310p-npu-driver_${driver_ver}_linux-$(arch).run --qui
     bash ascend/Ascend-cann-toolkit_${cann_ver}_linux-$(arch).run --quiet --full && \
     ls -lh /usr/local/Ascend/* /usr/local/sbin/npu-smi
 
+
 FROM base as run310p
 
 ARG cann_ver="6.0.RC1"
 ARG driver_ver="6.0.rc1"
 
-RUN bash ascend/Ascend-hdk-310p-npu-driver_${driver_ver}_linux-$(arch).run --quiet --docker && \
+RUN umask 0022 && \
     bash ascend/Ascend-cann-nnae_${cann_ver}_linux-$(arch).run --quiet --install && \
+    bash ascend/Ascend-hdk-310p-npu-driver_${driver_ver}_linux-$(arch).run --quiet --docker && \
     ls -lh /usr/local/Ascend/*
+
 
 FROM ubuntu:20.04
 

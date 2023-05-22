@@ -4,7 +4,6 @@ FROM openeuler/openeuler:20.03-lts-sp3
 
 ARG dtype
 
-COPY release /opt/release
 COPY --from=0 /usr/local/Ascend_run${dtype} /usr/local/Ascend
 COPY --from=0 /usr/local/sbin/npu-smi${dtype} /usr/local/sbin/npu-smi
 ADD *.tar.gz /usr/local/
@@ -54,10 +53,7 @@ RUN if [ "$(arch)" = "aarch64" ];then arch="aarch64";else arch="x64";fi && \
     python3 -m pip install --no-cache-dir mindspore_lite-1.9.0-cp37-cp37m-linux_$(arch).whl && \
     rm -rf /root/* /root/.cache
 
-RUN python3 -m pip install --no-cache-dir /opt/release/python/modelbox-*.whl && \
-    rpm -ivh /opt/release/*.rpm && \
-    usermod -G HwHiAiUser modelbox && \
-    (cd /lib/systemd/system/sysinit.target.wants/; for i in *; \
+RUN (cd /lib/systemd/system/sysinit.target.wants/; for i in *; \
     do [ $i = systemd-tmpfiles-setup.service ] || rm -f $i; done); \
     rm -f /lib/systemd/system/multi-user.target.wants/*; \
     rm -f /etc/systemd/system/*.wants/*; \
@@ -68,8 +64,7 @@ RUN python3 -m pip install --no-cache-dir /opt/release/python/modelbox-*.whl && 
     rm -f /lib/systemd/system/anaconda.target.wants/*; \
     sed -i 's/^SystemMaxUse=.*/SystemMaxUse=16M/g' /etc/systemd/journald.conf && \
     echo 'source /usr/local/Ascend/nnae/set_env.sh' >> /etc/bashrc && \
-    echo "ldconfig &>/dev/null" >> /etc/bashrc && \
-    systemctl enable modelbox
+    echo "ldconfig &>/dev/null" >> /etc/bashrc
 
 VOLUME ["/sys/fs/cgroup", "/tmp", "/run", "/run/lock"]
 STOPSIGNAL SIGRTMIN+3

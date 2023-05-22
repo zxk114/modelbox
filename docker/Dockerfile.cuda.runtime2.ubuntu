@@ -1,7 +1,6 @@
 ARG BASE_IMAGE=ubuntu:20.04
 FROM ${BASE_IMAGE} as base
 
-COPY release /opt/release
 ADD *.tar.gz /usr/local/
 
 ARG CUDA_VER
@@ -75,9 +74,7 @@ RUN apt update && \
     find /usr/local -name "*.a"|xargs rm -f && \
     rm -rf /var/lib/apt/lists/* /root/*
 
-RUN python3 -m pip install --no-cache-dir /opt/release/python/modelbox-*.whl && \
-    dpkg -i /opt/release/*.deb && \
-    (cd /lib/systemd/system/sysinit.target.wants/; for i in *; \
+RUN (cd /lib/systemd/system/sysinit.target.wants/; for i in *; \
     do [ $i = systemd-tmpfiles-setup.service ] || rm -f $i; done); \
     rm -f /lib/systemd/system/multi-user.target.wants/*; \
     rm -f /etc/systemd/system/*.wants/*; \
@@ -90,7 +87,7 @@ RUN python3 -m pip install --no-cache-dir /opt/release/python/modelbox-*.whl && 
     echo "/usr/local/nvidia/lib" >> /etc/ld.so.conf.d/nvidia.conf && \
     echo "/usr/local/nvidia/lib64" >> /etc/ld.so.conf.d/nvidia.conf && \
     sed -i 's/^SystemMaxUse=.*/SystemMaxUse=16M/g' /etc/systemd/journald.conf && \
-    echo "ldconfig &>/dev/null" >> /etc/bash.bashrc && systemctl enable modelbox
+    echo "ldconfig &>/dev/null" >> /etc/bash.bashrc
 
 VOLUME ["/sys/fs/cgroup", "/tmp", "/run", "/run/lock"]
 STOPSIGNAL SIGRTMIN+3

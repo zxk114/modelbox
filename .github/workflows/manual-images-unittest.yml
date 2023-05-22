@@ -1,0 +1,195 @@
+name: manual images unittest
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'new release version(e.g. v1.1.0)'
+        required: true
+        default: 'latest'
+      imagetype:
+        type: choice
+        description: build type of image
+        options: 
+        - all_images_test
+        - unittest_cuda112_trt
+        - unittest_cuda112_tf
+        - unittest_cuda102_trt
+        - unittest_cuda102_torch
+        - unittest_x86d
+        - unittest_armd
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  unittest_cuda112_trt:
+    if: inputs.imagetype == 'unittest_cuda112_trt' || inputs.imagetype == 'unittest_all'
+    runs-on: ubuntu-latest
+    container: zxk114/modelbox-develop-tensorrt_8.4.2-cuda_11.2-${{matrix.osName}}-x86_64:${{inputs.version}}
+    strategy:
+      matrix:
+        osName: [ubuntu, openeuler]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@main
+      - name: CMake
+        run: |
+          mkdir build
+          cd build
+          ldconfig
+          cmake .. -DCMAKE_BUILD_TYPE=Release -DWITH_ALL_DEMO=on -DWITH_WEBUI=on
+      - name: Test
+        working-directory: build
+        run: |
+          if [ "${{matrix.osName}}" == "ubuntu" ];then
+            dpkg -r $(dpkg -l|grep modelbox|awk '{print $2}') || true
+          elif [ "${{matrix.osName}}" == "openeuler" ];then
+            rpm -e $(rpm -qa|grep modelbox) || true
+          fi
+          make build-test -j8
+          make unittest
+
+  unittest_cuda112_tf:
+    if: inputs.imagetype == 'unittest_cuda112_tf' || inputs.imagetype == 'unittest_all'
+    runs-on: ubuntu-latest
+    container: zxk114/modelbox-develop-tensorflow_2.6.0-cuda_11.2-${{matrix.osName}}-x86_64:${{inputs.version}}
+    strategy:
+      matrix:
+        osName: [ubuntu, openeuler]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@main
+      - name: CMake
+        run: |
+          mkdir build
+          cd build
+          ldconfig
+          cmake .. -DCMAKE_BUILD_TYPE=Release -DWITH_ALL_DEMO=on -DWITH_WEBUI=on
+      - name: Test
+        working-directory: build
+        run: |
+          if [ "${{matrix.osName}}" == "ubuntu" ];then
+            dpkg -r $(dpkg -l|grep modelbox|awk '{print $2}') || true
+          elif [ "${{matrix.osName}}" == "openeuler" ];then
+            rpm -e $(rpm -qa|grep modelbox) || true
+          fi
+          make build-test -j8
+          make unittest
+
+  unittest_cuda102_trt:
+    if: inputs.imagetype == 'unittest_cuda102_trt' || inputs.imagetype == 'unittest_all'
+    runs-on: ubuntu-latest
+    container: zxk114/modelbox-develop-tensorrt_7.1.3-cuda_10.2-${{matrix.osName}}-x86_64:${{inputs.version}}
+    strategy:
+      matrix:
+        osName: [ubuntu, openeuler]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@main
+      - name: CMake
+        run: |
+          mkdir build
+          cd build
+          ldconfig
+          cmake .. -DCMAKE_BUILD_TYPE=Release -DWITH_ALL_DEMO=on -DWITH_WEBUI=on
+      - name: Test
+        working-directory: build
+        run: |
+          if [ "${{matrix.osName}}" == "ubuntu" ];then
+            dpkg -r $(dpkg -l|grep modelbox|awk '{print $2}') || true
+          elif [ "${{matrix.osName}}" == "openeuler" ];then
+            rpm -e $(rpm -qa|grep modelbox) || true
+          fi
+          make build-test -j8
+          make unittest
+
+  unittest_cuda102_torch:
+    if: inputs.imagetype == 'unittest_cuda102_torch' || inputs.imagetype == 'unittest_all'
+    runs-on: ubuntu-latest
+    container:
+      image: zxk114/modelbox-develop-libtorch_1.9.1-cuda_10.2-${{matrix.osName}}-x86_64:${{inputs.version}}
+    strategy:
+      matrix:
+        osName: [ubuntu, openeuler]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@main
+      - name: CMake
+        run: |
+          mkdir build
+          cd build
+          cmake .. -DCMAKE_BUILD_TYPE=Release -DWITH_ALL_DEMO=on -DWITH_WEBUI=on
+      - name: Test
+        working-directory: build
+        run: |
+          if [ "${{matrix.osName}}" == "ubuntu" ];then
+            dpkg -r $(dpkg -l|grep modelbox|awk '{print $2}') || true
+          elif [ "${{matrix.osName}}" == "openeuler" ];then
+            rpm -e $(rpm -qa|grep modelbox) || true
+          fi
+          make build-test -j8
+          make unittest
+
+  unittest_x86d:
+    if: inputs.imagetype == 'unittest_x86d' || inputs.imagetype == 'unittest_all'
+    runs-on: ubuntu-latest
+    container:
+      image: zxk114/modelbox-develop-mindspore_1.9.0-cann_6.0.1-d${{matrix.dtype}}-${{matrix.osName}}-x86_64:${{inputs.version}}
+    strategy:
+      matrix:
+        osName: [ubuntu, openeuler]
+        dtype: [310, 310p]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@main
+      - name: CMake
+        run: |
+          mkdir build
+          cd build
+          cmake .. -DCMAKE_BUILD_TYPE=Release -DWITH_ALL_DEMO=on -DWITH_WEBUI=on
+      - name: Test
+        working-directory: build
+        run: |
+          if [ "${{matrix.osName}}" == "ubuntu" ];then
+            dpkg -r $(dpkg -l|grep modelbox|awk '{print $2}') || true
+          elif [ "${{matrix.osName}}" == "openeuler" ];then
+            rpm -e $(rpm -qa|grep modelbox) || true
+          fi
+          make build-test -j8
+          make unittest
+
+  unittest_armd:
+    if: inputs.imagetype == 'unittest_armd' || inputs.imagetype == 'unittest_all'
+    runs-on: ${{matrix.osName}}-d310
+    strategy:
+      matrix:
+        osName: [ubuntu]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@main
+      - name: CMake
+        run: |
+          sed -i 's@https://gitee.com/modelbox/modelbox-binary/attach_files/1010735/download@http://192.168.59.29@g' thirdparty/CMake/pre-download.in
+          mkdir build
+          cd build
+          ldconfig
+          export $(cat /proc/1/environ|tr "\\0" "\\n"|xargs)
+          if [ "${{matrix.osName}}" == "ubuntu" ];then
+            export LD_LIBRARY_PATH=/usr/lib:/usr/local/lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}
+          elif [ "${{matrix.osName}}" == "openeuler" ];then
+            export LD_LIBRARY_PATH=/usr/lib64:/usr/local/lib64${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}
+          fi
+          cmake .. -DCMAKE_BUILD_TYPE=Release -DWITH_ALL_DEMO=on -DWITH_WEBUI=on -DUSE_CN_MIRROR=yes
+      - name: Test
+        working-directory: build
+        run: |
+          if [ "${{matrix.osName}}" == "ubuntu" ];then
+            dpkg -r $(dpkg -l|grep modelbox|awk '{print $2}') || true
+            export LD_PRELOAD=/usr/lib/aarch64-linux-gnu/libgomp.so.1
+          elif [ "${{matrix.osName}}" == "openeuler" ];then
+            rpm -e $(rpm -qa|grep modelbox) || true
+            export LD_PRELOAD=/usr/lib64/libgomp.so.1
+          fi
+          make build-test -j8
+          make unittest

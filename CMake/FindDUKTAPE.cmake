@@ -4,7 +4,6 @@ find_path(DUKTAPE_INCLUDE NAMES duktape.h
 mark_as_advanced(DUKTAPE_INCLUDE)
 
 # Look for the library (sorted from most current/relevant entry to least).
-set(DRIVER_LIB_PATH ${HITS_DRIVER_PATH}/lib64)
 find_library(DUKTAPE_LIBRARY NAMES
     duktape
     HINTS ${CMAKE_INSTALL_FULL_LIBDIR}

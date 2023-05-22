@@ -16,30 +16,17 @@ on:
 jobs:
   complie_rockchip_rknnrt_build_ubuntu_image:
     runs-on: [rockchip-unit, Linux, ARM64]
-    outputs:
-      IMAGE_NAME_DEV: ${{ steps.env.outputs.IMAGE_NAME_DEV }}
-      IMAGE_VERSION: ${{ steps.env.outputs.IMAGE_VERSION }}
-    name: Build on ${{ matrix.distro }} ${{ matrix.arch }}
-
-    strategy:
-      matrix:
-        include:
-          - arch: aarch64
-            distro: ubuntu20.04
+    name: Build on aarch64 ubuntu20.04
+    env:
+      IMAGE_NAME_DEV: modelbox/modelbox-build-rockchip-rknnrt-${{ github.event.inputs.images_rk_name }}-ubuntu-aarch64
+      IMAGE_VERSION: ${{ github.event.inputs.version }}
     steps:
-      - name: Set-env
-        id: env
-        run: |
-          echo "::set-output name=IMAGE_NAME_DEV::modelbox/modelbox-build-rockchip-rknnrt-${{ github.event.inputs.images_rk_name }}-ubuntu-aarch64"
-          echo "::set-output name=IMAGE_VERSION::${{ github.event.inputs.version }}"
-          echo "the docker name is ${{ steps.env.outputs.IMAGE_NAME_DEV }}."
-          echo "the docker version is ${{ steps.env.outputs.IMAGE_VERSION }}."
       - name: Checkout
-        uses: actions/checkout@v3.1.0
+        uses: actions/checkout@main
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2.0.0
+        uses: docker/setup-buildx-action@master
       - name: Login to DockerHub
-        uses: docker/login-action@v2.0.0
+        uses: docker/login-action@master
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
@@ -50,11 +37,11 @@ jobs:
           ./docker/prepare_for_rockchip.sh ${{ github.event.inputs.images_rk_name }}
         shell: bash
       - name: Build and Push
-        uses: docker/build-push-action@v3.1.1
+        uses: docker/build-push-action@master
         with:
           push: true
           context: .
           file: docker/Dockerfile.rknnrt.build.ubuntu
           tags: |
-            ${{ steps.env.outputs.IMAGE_NAME_DEV }}:latest
-            ${{ steps.env.outputs.IMAGE_NAME_DEV }}:${{ steps.env.outputs.IMAGE_VERSION }}
+            ${{ env.IMAGE_NAME_DEV }}:latest
+            ${{ env.IMAGE_NAME_DEV }}:${{ env.IMAGE_VERSION }}

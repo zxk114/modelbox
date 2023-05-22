@@ -2,7 +2,13 @@
 CODE_DIR=$(cd $(dirname $0)/..;pwd)
 release_dir=${CODE_DIR}/build/release
 ls -lh ${release_dir}
-osName=$(sed -nr '1s/^NAME="(.*)"$/\1/gp' /etc/os-release)
+
+if [ -n "$1" ]; then
+    osName=$1
+else
+    osName=$(sed -nr '1s/^NAME="(.*)"$/\1/gp' /etc/os-release)
+fi
+
 if [ "${osName,,}" == "ubuntu" ];then
     rm -f ${release_dir}/*.rpm
     postfix="*.deb"

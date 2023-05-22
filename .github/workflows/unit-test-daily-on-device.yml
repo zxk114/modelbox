@@ -9,7 +9,7 @@ env:
   BUILD_TYPE: Debug
 
 jobs:
-  build:
+  UnitTest:
     runs-on: ${{ matrix.devices }}
     if: github.repository == 'modelbox-ai/modelbox'
     strategy:
@@ -19,7 +19,7 @@ jobs:
             - tensorrt
             - pytorch
             - tensorflow
-            - ubuntu-d310p
+            - ascend
 
     steps:
     - uses: actions/checkout@v3

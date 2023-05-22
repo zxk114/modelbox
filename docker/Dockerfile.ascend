@@ -1,0 +1,8 @@
+FROM modelbox/c83-base:latest as ascend
+
+FROM ubuntu:20.04
+ARG dtype
+
+COPY --from=ascend /usr/local/Ascend_dev${dtype} /usr/local/Ascend_dev${dtype}
+COPY --from=ascend /usr/local/Ascend_run${dtype} /usr/local/Ascend_run${dtype}
+COPY --from=ascend /usr/local/sbin/npu-smi${dtype} /usr/local/sbin/npu-smi${dtype}
